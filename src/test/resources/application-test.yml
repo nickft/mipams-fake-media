@@ -1,0 +1,11 @@
+org:
+  mipams:
+    core:
+      image_folder: /home/nikos/Desktop/demo
+
+logging:
+  level:
+    org:
+      mipams:
+        jumbf:
+          core: INFO
