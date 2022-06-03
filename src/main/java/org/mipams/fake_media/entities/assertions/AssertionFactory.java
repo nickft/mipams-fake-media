@@ -268,5 +268,4 @@ public class AssertionFactory {
 
         return builder.getResult();
     }
-
 }

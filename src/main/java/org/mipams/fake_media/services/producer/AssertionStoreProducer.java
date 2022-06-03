@@ -1,7 +1,9 @@
 package org.mipams.fake_media.services.producer;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,9 +59,11 @@ public class AssertionStoreProducer {
 
     public JumbfBox produce(ProducerRequest producerRequest) throws MipamsException {
 
-        List<JumbfBox> assertionJumbfBoxList = generateAssertionJumbfBoxes(producerRequest);
+        List<JumbfBox> deterministicAssertionJumbfBoxList = generateAssertionJumbfBoxes(producerRequest);
 
-        ensureLabelUniquenessInAssertionStore(assertionJumbfBoxList);
+        ensureLabelUniquenessInAssertionStore(deterministicAssertionJumbfBoxList);
+
+        List<JumbfBox> assertionJumbfBoxList = addRandomnessToAssertions(deterministicAssertionJumbfBoxList);
 
         JumbfBoxBuilder assertionStoreBuilder = new JumbfBoxBuilder();
 
@@ -236,6 +240,38 @@ public class AssertionStoreProducer {
                 labelOccurenceMap.remove(label);
             }
         }
+    }
+
+    private List<JumbfBox> addRandomnessToAssertions(List<JumbfBox> assertionJumbfBoxList) throws MipamsException {
+
+        int numOfRandomBytes = 32;
+        String randomFileUrl, randomFileName;
+
+        List<JumbfBox> resultAssertionJumbfBoxList = new ArrayList<>();
+        JumbfBoxBuilder builder;
+
+        for (JumbfBox jumbfBox : assertionJumbfBoxList) {
+            try {
+                byte[] randomBytes = cryptoService.getRandomNumber(numOfRandomBytes);
+
+                try (InputStream is = new ByteArrayInputStream(randomBytes);) {
+
+                    randomFileName = CoreUtils.randomStringGenerator();
+                    randomFileUrl = CoreUtils.getFullPath(properties.getFileDirectory(), randomFileName);
+                    CoreUtils.writeBytesFromInputStreamToFile(is, numOfRandomBytes, randomFileUrl);
+
+                    builder = new JumbfBoxBuilder(jumbfBox);
+                    builder.setPrivateField(randomFileUrl);
+
+                    resultAssertionJumbfBoxList.add(builder.getResult());
+                }
+
+            } catch (CryptoException | IOException e) {
+                throw new MipamsException(e);
+            }
+        }
+
+        return resultAssertionJumbfBoxList;
     }
 
     public void addContentBindingAssertion(JumbfBox assertionStoreJumbfBox, String assetUrl) throws MipamsException {
