@@ -14,9 +14,11 @@ import org.mipams.fake_media.entities.requests.ConsumerRequest;
 import org.mipams.fake_media.entities.requests.ProducerRequestBuilder;
 import org.mipams.fake_media.services.ProvenanceConsumer;
 import org.mipams.fake_media.services.ProvenanceProducer;
+import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
+import org.mipams.fake_media.utils.ProvenanceUtils;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -25,11 +27,15 @@ import java.security.cert.CertificateFactory;
 import java.util.List;
 
 import org.mipams.jumbf.core.entities.JumbfBox;
+import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
+import org.mipams.jumbf.core.entities.ParseMetadata;
+import org.mipams.jumbf.core.services.CoreGeneratorService;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.util.ResourceUtils;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
@@ -50,6 +56,9 @@ public class ProducerTest {
 
     @Autowired
     ProvenanceConsumer consumer;
+
+    @Autowired
+    CoreGeneratorService coreGeneratorService;
 
     @Autowired
     JumbfBoxService jumbfBoxService;
@@ -97,7 +106,8 @@ public class ProducerTest {
 
         List<Assertion> assertionList = List.of(assertion1, assertion2, assertion3);
 
-        ProducerRequestBuilder builder = new ProducerRequestBuilder(properties.getFileDirectory() + "/campnou2.jpeg");
+        String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        ProducerRequestBuilder builder = new ProducerRequestBuilder(assetFileUrl);
 
         ClaimGenerator claimGen = new ClaimGenerator();
         claimGen.setDescription("Mipams Generator 2.0 (Desktop)");
@@ -107,29 +117,46 @@ public class ProducerTest {
         builder.setClaimGenerator(claimGen);
 
         JumbfBox manifestJumbfBox = producer.produceManifestJumbfBox(builder.getResult());
-
         String outputFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), PROVENANCE_FILE_NAME);
 
-        try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
-            jumbfBoxService.writeToJumbfFile(manifestJumbfBox, fos);
-        }
+        JumbfBoxBuilder manifestStoreBuilder = new JumbfBoxBuilder();
+
+        ManifestStoreContentType service = new ManifestStoreContentType();
+        manifestStoreBuilder.setContentType(service);
+        manifestStoreBuilder.setJumbfBoxAsRequestable();
+        manifestStoreBuilder.setLabel(service.getLabel());
+        manifestStoreBuilder.appendContentBox(manifestJumbfBox);
+
+        coreGeneratorService.generateJumbfMetadataToFile(List.of(manifestStoreBuilder.getResult()), outputFilePath);
+        CoreUtils.deleteDir(
+                CoreUtils.getFullPath(properties.getFileDirectory(), manifestJumbfBox.getDescriptionBox().getLabel()));
 
         logger.info("Manifest box is stored in file " + outputFilePath);
     }
 
     @Test
     void testManifestConsumption() throws Exception {
-
         String inputFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), PROVENANCE_FILE_NAME);
 
-        try (FileInputStream fis = new FileInputStream(inputFilePath)) {
-            JumbfBox manifestJumbfBox = jumbfBoxService.parseSuperBox(fis);
+        String manifestDirectory = ProvenanceUtils.createSubdirectory(properties.getFileDirectory(),
+                CoreUtils.randomStringGenerator());
 
-            ConsumerRequest consumerRequest = new ConsumerRequest();
-            consumerRequest.setAssetUrl(properties.getFileDirectory() + "/campnou2.jpeg");
-            consumerRequest.setManifestContentTypeJumbfBox(manifestJumbfBox);
+        JumbfBox manifestStoreJumbfBox;
+        ParseMetadata parseMetadata = new ParseMetadata();
+        parseMetadata.setParentDirectory(manifestDirectory);
 
-            consumer.verifyIntegrityOfManifestJumbfBox(consumerRequest);
+        try (InputStream input = new FileInputStream(inputFilePath)) {
+            manifestStoreJumbfBox = jumbfBoxService.parseFromJumbfFile(input, parseMetadata);
         }
+
+        ConsumerRequest consumerRequest = new ConsumerRequest();
+
+        String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        consumerRequest.setAssetUrl(assetFileUrl);
+        consumerRequest.setManifestContentTypeJumbfBox((JumbfBox) manifestStoreJumbfBox.getContentBoxList().get(0));
+
+        consumer.verifyIntegrityOfManifestJumbfBox(consumerRequest);
+
+        CoreUtils.deleteDir(manifestDirectory);
     }
 }

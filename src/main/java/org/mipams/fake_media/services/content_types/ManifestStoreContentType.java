@@ -7,9 +7,10 @@ import java.util.List;
 
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
+import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.MipamsException;
-
+import org.mipams.jumbf.core.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,9 @@ public class ManifestStoreContentType implements ProvenanceContentType {
     @Autowired
     JumbfBoxService jumbfBoxService;
 
+    @Autowired
+    Properties properties;
+
     @Override
     public String getContentTypeUuid() {
         return "6D707374-C65D-11EC-9D64-0242AC120002";
@@ -35,18 +39,22 @@ public class ManifestStoreContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, long availableBytesForBox)
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
 
         logger.debug("Start parsing a new Manifest Store");
 
         List<BmffBox> contentBoxList = new ArrayList<>();
 
-        long remainingBytes = availableBytesForBox;
+        long remainingBytes = parseMetadata.getAvailableBytesForBox();
 
         while (remainingBytes > 0) {
 
-            JumbfBox manifest = jumbfBoxService.parseFromJumbfFile(input, remainingBytes);
+            ParseMetadata manifestParseMetadata = new ParseMetadata();
+            manifestParseMetadata.setAvailableBytesForBox(remainingBytes);
+            manifestParseMetadata.setParentDirectory(parseMetadata.getParentDirectory());
+
+            JumbfBox manifest = jumbfBoxService.parseFromJumbfFile(input, manifestParseMetadata);
             contentBoxList.add(manifest);
 
             logger.debug("A new Manifest has been discovered with type " + manifest.getDescriptionBox().getUuid());
@@ -64,7 +72,6 @@ public class ManifestStoreContentType implements ProvenanceContentType {
         for (BmffBox bmffBox : contentBoxList) {
 
             JumbfBox jumbfBox = (JumbfBox) bmffBox;
-
             jumbfBoxService.writeToJumbfFile(jumbfBox, outputStream);
         }
     }

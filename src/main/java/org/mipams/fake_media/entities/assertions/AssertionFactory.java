@@ -23,6 +23,7 @@ import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,10 +71,10 @@ public class AssertionFactory {
     JsonContentType jsonContentType;
 
     @Autowired
-    EmbeddedFileContentType embeddedFileContentType;
+    Properties properties;
 
     @Autowired
-    Properties properties;
+    EmbeddedFileContentType embeddedFileContentType;
 
     public String getBaseLabel(Assertion assertion) throws MipamsException {
         MipamsAssertion type = getMipamsAssertionType(assertion);
@@ -135,7 +136,8 @@ public class AssertionFactory {
         return result;
     }
 
-    public JumbfBox convertAssertionToJumbfBox(Assertion assertion) throws MipamsException {
+    public JumbfBox convertAssertionToJumbfBox(Assertion assertion, ProvenanceMetadata metadata)
+            throws MipamsException {
 
         JumbfBox result;
 
@@ -143,13 +145,13 @@ public class AssertionFactory {
 
         switch (type) {
             case THUMBNAIL:
-                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion);
+                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion, metadata);
                 break;
             case CONTENT_BINDING:
             case ACTION:
             case INGREDIENT:
             default:
-                result = createCborContentTypeJumbfBox(type.getLabel(), assertion);
+                result = createCborContentTypeJumbfBox(type.getLabel(), assertion, metadata);
                 break;
         }
 
@@ -177,13 +179,14 @@ public class AssertionFactory {
         return result;
     }
 
-    private JumbfBox createCborContentTypeJumbfBox(String label, Assertion assertion) throws MipamsException {
+    private JumbfBox createCborContentTypeJumbfBox(String label, Assertion assertion, ProvenanceMetadata metadata)
+            throws MipamsException {
 
         ObjectMapper mapper = new CBORMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
         String assertionFileName = CoreUtils.randomStringGenerator();
-        String assertionFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), assertionFileName);
+        String assertionFilePath = CoreUtils.getFullPath(metadata.getParentDirectory(), assertionFileName);
 
         try (OutputStream os = new FileOutputStream(assertionFilePath)) {
             byte[] cborData = mapper.writeValueAsBytes(assertion);
@@ -211,13 +214,14 @@ public class AssertionFactory {
     }
 
     @SuppressWarnings("unused")
-    private JumbfBox createJsonContentTypeJumbfBox(String label, Assertion assertion) throws MipamsException {
+    private JumbfBox createJsonContentTypeJumbfBox(String label, Assertion assertion, ProvenanceMetadata metadata)
+            throws MipamsException {
 
         ObjectMapper mapper = new JsonMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
         String assertionFileName = CoreUtils.randomStringGenerator();
-        String assertionFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), assertionFileName);
+        String assertionFilePath = CoreUtils.getFullPath(metadata.getParentDirectory(), assertionFileName);
 
         try (OutputStream os = new FileOutputStream(assertionFilePath)) {
             byte[] jsonData = mapper.writeValueAsBytes(assertion);
@@ -243,8 +247,8 @@ public class AssertionFactory {
         }
     }
 
-    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion)
-            throws MipamsException {
+    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion,
+            ProvenanceMetadata metadata) throws MipamsException {
 
         String assertionFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), assertion.getFileName());
 

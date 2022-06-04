@@ -3,13 +3,15 @@ package org.mipams.fake_media.services;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
+import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
 import org.mipams.fake_media.services.producer.AssertionStoreProducer;
 import org.mipams.fake_media.services.producer.ClaimProducer;
 import org.mipams.fake_media.services.producer.ClaimSignatureProducer;
-
+import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,9 @@ public class ProvenanceProducer {
         @Autowired
         ManifestDiscovery manifestDiscovery;
 
+        @Autowired
+        Properties properties;
+
         public final JumbfBox produceManifestJumbfBox(ProducerRequest producerRequest) throws MipamsException {
 
                 JumbfBoxBuilder manifestJumbfBoxBuilder = new JumbfBoxBuilder();
@@ -42,16 +47,24 @@ public class ProvenanceProducer {
                 manifestJumbfBoxBuilder.setLabel(manifestId);
                 logger.debug(String.format("Issue new manifest Id %s", manifestId));
 
+                String manifestDirectory = ProvenanceUtils.createSubdirectory(properties.getFileDirectory(),
+                                manifestId);
+
+                ProvenanceMetadata manifestMetadata = new ProvenanceMetadata();
+                manifestMetadata.setParentDirectory(manifestDirectory);
+
                 ManifestContentType manifestContentType = manifestDiscovery
                                 .discoverManifestType(producerRequest.getAssertionList());
                 manifestJumbfBoxBuilder.setContentType(manifestContentType);
 
-                JumbfBox assertionStoreJumbfBox = generateAssertionStoreJumbfBox(manifestContentType, producerRequest);
+                JumbfBox assertionStoreJumbfBox = generateAssertionStoreJumbfBox(manifestContentType, producerRequest,
+                                manifestMetadata);
 
-                JumbfBox claimJumbfBox = claimProducer.produce(manifestId, producerRequest, assertionStoreJumbfBox);
+                JumbfBox claimJumbfBox = claimProducer.produce(manifestId, producerRequest, assertionStoreJumbfBox,
+                                manifestMetadata);
 
                 JumbfBox claimSignatureJumbfBox = claimSignatureProducer.produce(producerRequest.getSigner(),
-                                claimJumbfBox);
+                                claimJumbfBox, manifestMetadata);
 
                 manifestJumbfBoxBuilder.appendContentBox(claimJumbfBox);
                 manifestJumbfBoxBuilder.appendContentBox(claimSignatureJumbfBox);
@@ -66,30 +79,34 @@ public class ProvenanceProducer {
         }
 
         private JumbfBox generateAssertionStoreJumbfBox(ManifestContentType manifestContentType,
-                        ProducerRequest producerRequest) throws MipamsException {
+                        ProducerRequest producerRequest, ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
                 JumbfBox assertionStoreJumbfBox;
 
                 if (manifestDiscovery.isUpdateManifestRequest(manifestContentType)) {
-                        assertionStoreJumbfBox = generateAssertionStoreForUpdateManifest(producerRequest);
+                        assertionStoreJumbfBox = generateAssertionStoreForUpdateManifest(producerRequest,
+                                        provenanceMetadata);
                 } else {
-                        assertionStoreJumbfBox = generateAssertionStoreForStandardManifest(producerRequest);
+                        assertionStoreJumbfBox = generateAssertionStoreForStandardManifest(producerRequest,
+                                        provenanceMetadata);
                 }
 
                 return assertionStoreJumbfBox;
         }
 
-        private JumbfBox generateAssertionStoreForUpdateManifest(ProducerRequest producerRequest)
+        private JumbfBox generateAssertionStoreForUpdateManifest(ProducerRequest producerRequest,
+                        ProvenanceMetadata provenanceMetadata)
                         throws MipamsException {
-                return assertionStoreProducer.produce(producerRequest);
+                return assertionStoreProducer.produce(producerRequest, provenanceMetadata);
         }
 
-        private JumbfBox generateAssertionStoreForStandardManifest(ProducerRequest producerRequest)
+        private JumbfBox generateAssertionStoreForStandardManifest(ProducerRequest producerRequest,
+                        ProvenanceMetadata provenanceMetadata)
                         throws MipamsException {
-                JumbfBox assertionStoreJumbfBox = assertionStoreProducer.produce(producerRequest);
+                JumbfBox assertionStoreJumbfBox = assertionStoreProducer.produce(producerRequest, provenanceMetadata);
 
                 String assetUrl = producerRequest.getAssetUrl();
-                assertionStoreProducer.addContentBindingAssertion(assertionStoreJumbfBox, assetUrl);
+                assertionStoreProducer.addContentBindingAssertion(assertionStoreJumbfBox, assetUrl, provenanceMetadata);
 
                 return assertionStoreJumbfBox;
         }

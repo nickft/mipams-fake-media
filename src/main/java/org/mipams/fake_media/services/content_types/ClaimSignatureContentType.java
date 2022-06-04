@@ -4,8 +4,10 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
+import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.CborBoxService;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +30,16 @@ public class ClaimSignatureContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, long availableBytesForBox)
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
-        return List.of(cborBoxService.parseFromJumbfFile(input, availableBytesForBox));
+
+        String claimSignatureDir = ProvenanceUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
+
+        ParseMetadata claimSignatureParseMetadata = new ParseMetadata();
+        claimSignatureParseMetadata.setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());
+        claimSignatureParseMetadata.setParentDirectory(claimSignatureDir);
+
+        return List.of(cborBoxService.parseFromJumbfFile(input, claimSignatureParseMetadata));
     }
 
     @Override

@@ -18,13 +18,13 @@ import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
-import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.crypto.entities.CryptoException;
 import org.mipams.jumbf.crypto.entities.request.CryptoRequest;
 import org.mipams.jumbf.crypto.services.CryptoService;
 import org.mipams.jumbf.privacy_security.entities.ProtectionDescriptionBox;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 import org.mipams.fake_media.entities.assertions.Assertion;
 import org.mipams.fake_media.entities.assertions.AssertionFactory;
@@ -43,9 +43,6 @@ public class AssertionStoreProducer {
     AssertionStoreContentType assertionStoreContentType;
 
     @Autowired
-    Properties properties;
-
-    @Autowired
     AssertionFactory assertionFactory;
 
     @Autowired
@@ -57,13 +54,16 @@ public class AssertionStoreProducer {
     @Autowired
     CryptoService cryptoService;
 
-    public JumbfBox produce(ProducerRequest producerRequest) throws MipamsException {
+    public JumbfBox produce(ProducerRequest producerRequest, ProvenanceMetadata provenanceMetadata)
+            throws MipamsException {
 
-        List<JumbfBox> deterministicAssertionJumbfBoxList = generateAssertionJumbfBoxes(producerRequest);
+        List<JumbfBox> deterministicAssertionJumbfBoxList = generateAssertionJumbfBoxes(producerRequest,
+                provenanceMetadata);
 
         ensureLabelUniquenessInAssertionStore(deterministicAssertionJumbfBoxList);
 
-        List<JumbfBox> assertionJumbfBoxList = addRandomnessToAssertions(deterministicAssertionJumbfBoxList);
+        List<JumbfBox> assertionJumbfBoxList = addRandomnessToAssertions(deterministicAssertionJumbfBoxList,
+                provenanceMetadata);
 
         JumbfBoxBuilder assertionStoreBuilder = new JumbfBoxBuilder();
 
@@ -79,14 +79,14 @@ public class AssertionStoreProducer {
         return assertionStoreBuilder.getResult();
     }
 
-    private List<JumbfBox> generateAssertionJumbfBoxes(ProducerRequest producerRequest)
-            throws MipamsException {
+    private List<JumbfBox> generateAssertionJumbfBoxes(ProducerRequest producerRequest,
+            ProvenanceMetadata provenanceMetadata) throws MipamsException {
         List<JumbfBox> assertionStore = new ArrayList<>();
         String jumbfFilePath = "";
 
         for (Assertion assertion : producerRequest.getAssertionList()) {
 
-            JumbfBox assertionJumbfBox = assertionFactory.convertAssertionToJumbfBox(assertion);
+            JumbfBox assertionJumbfBox = assertionFactory.convertAssertionToJumbfBox(assertion, provenanceMetadata);
             JumbfBox accessRulesJumbfBox = assertion.getAccessRulesJumbfBoxOrNull();
 
             if (accessRulesJumbfBox != null) {
@@ -99,7 +99,7 @@ public class AssertionStoreProducer {
                 }
 
                 try {
-                    jumbfFilePath = writeJumbfBoxToAFile(assertionJumbfBox);
+                    jumbfFilePath = writeJumbfBoxToAFile(assertionJumbfBox, provenanceMetadata);
 
                     String encryptedContentFilePath = encryptFileContent(producerRequest.getSigner(),
                             producerRequest.getIvHexEncoded(), jumbfFilePath);
@@ -123,11 +123,11 @@ public class AssertionStoreProducer {
         return assertionStore;
     }
 
-    private String writeJumbfBoxToAFile(JumbfBox assertionJumbfBox)
+    private String writeJumbfBoxToAFile(JumbfBox assertionJumbfBox, ProvenanceMetadata provenanceMetadata)
             throws MipamsException {
 
         String jumbfBoxFileName = CoreUtils.randomStringGenerator();
-        String jumbfBoxFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), jumbfBoxFileName);
+        String jumbfBoxFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), jumbfBoxFileName);
 
         try (OutputStream fos = new FileOutputStream(jumbfBoxFilePath)) {
             jumbfBoxService.writeToJumbfFile(assertionJumbfBox, fos);
@@ -242,7 +242,8 @@ public class AssertionStoreProducer {
         }
     }
 
-    private List<JumbfBox> addRandomnessToAssertions(List<JumbfBox> assertionJumbfBoxList) throws MipamsException {
+    private List<JumbfBox> addRandomnessToAssertions(List<JumbfBox> assertionJumbfBoxList,
+            ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
         int numOfRandomBytes = 32;
         String randomFileUrl, randomFileName;
@@ -257,7 +258,7 @@ public class AssertionStoreProducer {
                 try (InputStream is = new ByteArrayInputStream(randomBytes);) {
 
                     randomFileName = CoreUtils.randomStringGenerator();
-                    randomFileUrl = CoreUtils.getFullPath(properties.getFileDirectory(), randomFileName);
+                    randomFileUrl = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), randomFileName);
                     CoreUtils.writeBytesFromInputStreamToFile(is, numOfRandomBytes, randomFileUrl);
 
                     builder = new JumbfBoxBuilder(jumbfBox);
@@ -274,14 +275,15 @@ public class AssertionStoreProducer {
         return resultAssertionJumbfBoxList;
     }
 
-    public void addContentBindingAssertion(JumbfBox assertionStoreJumbfBox, String assetUrl) throws MipamsException {
+    public void addContentBindingAssertion(JumbfBox assertionStoreJumbfBox, String assetUrl,
+            ProvenanceMetadata metadata) throws MipamsException {
 
         byte[] digest = ProvenanceUtils.computeSha256DigestOfFileContents(assetUrl);
 
         BindingAssertion assertion = new BindingAssertion("SHA-256", null, digest,
                 "This digest is composed from hasing the entire digital asset");
 
-        JumbfBox contentBindingJumbfBox = assertionFactory.convertAssertionToJumbfBox(assertion);
+        JumbfBox contentBindingJumbfBox = assertionFactory.convertAssertionToJumbfBox(assertion, metadata);
 
         assertionStoreJumbfBox.getContentBoxList().add(contentBindingJumbfBox);
     }

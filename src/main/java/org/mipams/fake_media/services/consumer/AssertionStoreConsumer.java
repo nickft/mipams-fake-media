@@ -157,14 +157,8 @@ public class AssertionStoreConsumer {
                 throw new MipamsException(String.format(ProvenanceErrorMessages.ASSERTION_DIGEST_MISMATCH, label));
             }
         } finally {
-            deleteFile(tempFilePath);
+            CoreUtils.deleteFile(tempFilePath);
         }
     }
 
-    private void deleteFile(String tempFilePath) {
-        File f = new File(tempFilePath);
-        if (f.exists()) {
-            f.delete();
-        }
-    }
 }

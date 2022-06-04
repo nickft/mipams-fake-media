@@ -16,13 +16,13 @@ import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
-import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.crypto.entities.CryptoException;
 import org.mipams.jumbf.crypto.entities.request.CryptoRequest;
 import org.mipams.jumbf.crypto.services.CryptoService;
 import org.mipams.fake_media.entities.ClaimSignature;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 import org.mipams.fake_media.services.content_types.ClaimSignatureContentType;
 import org.mipams.fake_media.utils.ProvenanceUtils;
@@ -33,15 +33,13 @@ import org.springframework.stereotype.Service;
 public class ClaimSignatureProducer {
 
     @Autowired
-    Properties properties;
-
-    @Autowired
     JumbfBoxService jumbfBoxService;
 
     @Autowired
     CryptoService cryptoService;
 
-    public JumbfBox produce(ProvenanceSigner signer, JumbfBox claimJumbfBox) throws MipamsException {
+    public JumbfBox produce(ProvenanceSigner signer, JumbfBox claimJumbfBox, ProvenanceMetadata provenanceMetadata)
+            throws MipamsException {
 
         ClaimSignature claimSignature = new ClaimSignature();
 
@@ -55,17 +53,18 @@ public class ClaimSignatureProducer {
 
         claimSignature.setPublicKey(signer.getSigningCredentials().getPublic().getEncoded());
 
-        byte[] signature = signClaimJumbfBox(signer, claimJumbfBox);
+        byte[] signature = signClaimJumbfBox(signer, claimJumbfBox, provenanceMetadata);
 
         claimSignature.setSignature(signature);
 
-        return convertClaimSignatureToJumbfBox(claimSignature);
+        return convertClaimSignatureToJumbfBox(claimSignature, provenanceMetadata);
     }
 
-    private byte[] signClaimJumbfBox(ProvenanceSigner signer, JumbfBox claimJumbfBox) throws MipamsException {
+    private byte[] signClaimJumbfBox(ProvenanceSigner signer, JumbfBox claimJumbfBox,
+            ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
         String claimJumbfFileName = CoreUtils.randomStringGenerator();
-        String claimJumbfFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), claimJumbfFileName);
+        String claimJumbfFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), claimJumbfFileName);
 
         try (FileOutputStream fos = new FileOutputStream(claimJumbfFilePath)) {
             jumbfBoxService.writeToJumbfFile(claimJumbfBox, fos);
@@ -95,12 +94,14 @@ public class ClaimSignatureProducer {
         }
     }
 
-    private JumbfBox convertClaimSignatureToJumbfBox(ClaimSignature claimSignature) throws MipamsException {
+    private JumbfBox convertClaimSignatureToJumbfBox(ClaimSignature claimSignature,
+            ProvenanceMetadata provenanceMetadata) throws MipamsException {
         ObjectMapper mapper = new CBORMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
         String claimSignatureFileName = CoreUtils.randomStringGenerator();
-        String claimSignatureFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), claimSignatureFileName);
+        String claimSignatureFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(),
+                claimSignatureFileName);
 
         try (OutputStream os = new FileOutputStream(claimSignatureFilePath)) {
             byte[] cborData = mapper.writeValueAsBytes(claimSignature);

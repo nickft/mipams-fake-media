@@ -34,9 +34,6 @@ import org.springframework.stereotype.Service;
 public class ClaimSignatureConsumer {
 
     @Autowired
-    Properties properties;
-
-    @Autowired
     JumbfBoxService jumbfBoxService;
 
     @Autowired
@@ -44,6 +41,9 @@ public class ClaimSignatureConsumer {
 
     @Autowired
     CryptoService cryptoService;
+
+    @Autowired
+    Properties properties;
 
     public Claim validateClaimSignature(String manifestId, JumbfBox claimJumbfBox, JumbfBox claimSignatureJumbfBox)
             throws MipamsException {

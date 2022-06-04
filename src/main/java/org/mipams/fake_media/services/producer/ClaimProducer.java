@@ -16,12 +16,12 @@ import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
-import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.crypto.services.CryptoService;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
 import org.mipams.fake_media.entities.Claim;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.assertions.AssertionRef;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.content_types.ClaimContentType;
@@ -32,9 +32,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClaimProducer {
-
-    @Autowired
-    Properties properties;
 
     @Autowired
     CryptoService cryptoService;
@@ -48,8 +45,8 @@ public class ClaimProducer {
     @Autowired
     AssertionStoreProducer assertionStoreProducer;
 
-    public JumbfBox produce(String manifestId, ProducerRequest producerRequest, JumbfBox assertionStore)
-            throws MipamsException {
+    public JumbfBox produce(String manifestId, ProducerRequest producerRequest, JumbfBox assertionStore,
+            ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
         List<AssertionRef> assertionHashedUriList = assertionRefProducer
                 .getAssertionReferenceListFromAssertionStore(manifestId, assertionStore);
@@ -70,7 +67,7 @@ public class ClaimProducer {
         String claimSignatureReference = ProvenanceUtils.getProvenanceJumbfURL(manifestId, claimSignatureLabel);
         claim.setClaimSignatureReference(claimSignatureReference);
 
-        return convertClaimToJumbfBox(claim);
+        return convertClaimToJumbfBox(claim, provenanceMetadata);
     }
 
     public List<String> getEncryptedAssertionUriList(String manifestId, JumbfBox assertionStore) {
@@ -93,11 +90,11 @@ public class ClaimProducer {
         return encryptedAssertionBoxLabelList;
     }
 
-    private JumbfBox convertClaimToJumbfBox(Claim claim) throws MipamsException {
+    private JumbfBox convertClaimToJumbfBox(Claim claim, ProvenanceMetadata provenanceMetadata) throws MipamsException {
         ObjectMapper mapper = new CBORMapper();
 
         String claimFileName = CoreUtils.randomStringGenerator();
-        String claimFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), claimFileName);
+        String claimFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), claimFileName);
 
         try (OutputStream os = new FileOutputStream(claimFilePath)) {
             byte[] cborData = mapper.writeValueAsBytes(claim);

@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
+import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.MipamsException;
 
@@ -31,15 +33,23 @@ public class AssertionStoreContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, long availableBytesForBox)
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
 
         List<BmffBox> contentBoxList = new ArrayList<>();
 
-        long remainingBytes = availableBytesForBox;
+        long remainingBytes = parseMetadata.getAvailableBytesForBox();
+
+        String assertionStoreDir = ProvenanceUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
+        ParseMetadata assertionParseMetadata;
 
         while (remainingBytes > 0) {
-            JumbfBox assertionBox = jumbfBoxService.parseFromJumbfFile(input, remainingBytes);
+
+            assertionParseMetadata = new ParseMetadata();
+            assertionParseMetadata.setAvailableBytesForBox(remainingBytes);
+            assertionParseMetadata.setParentDirectory(assertionStoreDir);
+
+            JumbfBox assertionBox = jumbfBoxService.parseFromJumbfFile(input, assertionParseMetadata);
             contentBoxList.add(assertionBox);
 
             remainingBytes -= assertionBox.getBoxSize();

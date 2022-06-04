@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
+import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,18 +29,22 @@ public abstract class ManifestContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, long availableBytesForBox)
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
 
         logger.debug("Start parsing a new Manifest");
 
         List<BmffBox> contentBoxList = new ArrayList<>();
 
-        long remainingBytes = availableBytesForBox;
+        long remainingBytes = parseMetadata.getAvailableBytesForBox();
 
         while (remainingBytes > 0) {
 
-            JumbfBox jumbfBox = jumbfBoxService.parseFromJumbfFile(input, remainingBytes);
+            ParseMetadata manifestContentParseMetadata = new ParseMetadata();
+            manifestContentParseMetadata.setAvailableBytesForBox(remainingBytes);
+            manifestContentParseMetadata.setParentDirectory(parseMetadata.getParentDirectory());
+
+            JumbfBox jumbfBox = jumbfBoxService.parseFromJumbfFile(input, manifestContentParseMetadata);
 
             logger.debug("Discovered a new jumbf box with label: " + jumbfBox.getDescriptionBox().getLabel());
 
