@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClaimConsumer {
-    public Claim desirializeClaimJumbfBox(JumbfBox claimSignatureJumbfBox) throws MipamsException {
+    public Claim desirializeClaimJumbfBox(JumbfBox claimJumbfBox) throws MipamsException {
 
-        CborBox claimSignatureCborBox = (CborBox) claimSignatureJumbfBox.getContentBoxList().get(0);
+        CborBox claimCborBox = (CborBox) claimJumbfBox.getContentBoxList().get(0);
 
-        String cborFilePath = claimSignatureCborBox.getFileUrl();
+        String cborFilePath = claimCborBox.getFileUrl();
 
         ObjectMapper mapper = new CBORMapper();
         try {

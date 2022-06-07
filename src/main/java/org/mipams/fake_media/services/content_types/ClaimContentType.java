@@ -4,11 +4,11 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.util.List;
 
-import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.CborBoxService;
+import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ public class ClaimContentType implements ProvenanceContentType {
     public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
 
-        String claimDir = ProvenanceUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
+        String claimDir = CoreUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
 
         ParseMetadata claimParseMetadata = new ParseMetadata();
         claimParseMetadata.setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());

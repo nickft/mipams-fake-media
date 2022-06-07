@@ -4,11 +4,11 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.util.List;
 
-import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.JsonBox;
 import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.boxes.JsonBoxService;
+import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class CredentialStoreContentType implements ProvenanceContentType {
     public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
             throws MipamsException {
 
-        String credentialStoreDir = ProvenanceUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
+        String credentialStoreDir = CoreUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
 
         ParseMetadata credentialStoreParseMetadata = new ParseMetadata();
         credentialStoreParseMetadata.setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());

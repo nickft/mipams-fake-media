@@ -9,7 +9,6 @@ import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.ManifestDiscovery;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
-import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +44,7 @@ public class ManifestProducer {
                 manifestJumbfBoxBuilder.setLabel(manifestId);
                 logger.debug(String.format("Issue new manifest Id %s", manifestId));
 
-                String manifestDirectory = ProvenanceUtils.createSubdirectory(properties.getFileDirectory(),
+                String manifestDirectory = CoreUtils.createSubdirectory(properties.getFileDirectory(),
                                 manifestId);
 
                 ProvenanceMetadata manifestMetadata = new ProvenanceMetadata();

@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.Properties;
-import org.mipams.jumbf.crypto.services.KeyReaderService;
+import org.mipams.jumbf.crypto.services.CredentialsReaderService;
 import org.mipams.fake_media.entities.ClaimGenerator;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
@@ -16,7 +16,6 @@ import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.consumer.ManifestConsumer;
 import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
 import org.mipams.fake_media.services.producer.ManifestProducer;
-import org.mipams.fake_media.utils.ProvenanceUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,7 +49,7 @@ public class ProducerTest {
     Logger logger = LoggerFactory.getLogger(ProducerTest.class);
 
     @Autowired
-    KeyReaderService keyReaderService;
+    CredentialsReaderService credentialsReaderService;
 
     @Autowired
     Properties properties;
@@ -85,7 +84,7 @@ public class ProducerTest {
         }
 
         PublicKey pubKey = cert.getPublicKey();
-        PrivateKey privKey = keyReaderService
+        PrivateKey privKey = credentialsReaderService
                 .getPrivateKey(ResourceUtils.getFile("classpath:test.private.key").getAbsolutePath());
 
         KeyPair kp = new KeyPair(pubKey, privKey);
@@ -158,7 +157,7 @@ public class ProducerTest {
     void testManifestConsumption() throws Exception {
         String inputFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), PROVENANCE_FILE_NAME);
 
-        String manifestDirectory = ProvenanceUtils.createSubdirectory(properties.getFileDirectory(),
+        String manifestDirectory = CoreUtils.createSubdirectory(properties.getFileDirectory(),
                 CoreUtils.randomStringGenerator());
 
         JumbfBox manifestStoreJumbfBox;

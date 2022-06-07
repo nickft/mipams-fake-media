@@ -15,7 +15,6 @@ import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JsonBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
-import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.assertions.Assertion;
@@ -94,23 +93,6 @@ public class ProvenanceUtils {
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.JSON_DESERIALIZE_ERROR, e);
         }
-    }
-
-    public static String createSubdirectory(String parentDirectory, String subDirectory) throws MipamsException {
-
-        String subDirectoryPath = CoreUtils.getFullPath(parentDirectory, subDirectory);
-
-        File f = new File(subDirectoryPath);
-
-        if (!f.exists()) {
-            f.mkdirs();
-        } else {
-            if (!f.isDirectory()) {
-                throw new MipamsException("Failed to create subdirectory: There is already a file with the same name");
-            }
-        }
-
-        return subDirectoryPath;
     }
 
     public static JumbfBox getProvenanceJumbfBox(JumbfBox manifestJumbfBox, ProvenanceContentType contentType)
