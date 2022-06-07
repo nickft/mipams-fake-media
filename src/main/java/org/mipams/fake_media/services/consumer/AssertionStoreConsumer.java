@@ -20,10 +20,9 @@ import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.assertions.AssertionFactory;
-import org.mipams.fake_media.entities.assertions.AssertionRef;
+import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.assertions.BindingAssertion;
-import org.mipams.fake_media.entities.requests.ConsumerRequest;
+import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
@@ -48,8 +47,7 @@ public class AssertionStoreConsumer {
     @Autowired
     Properties properties;
 
-    public void validateContentBinding(ConsumerRequest consumerRequest) throws MipamsException {
-        JumbfBox manifestJumbfBox = consumerRequest.getManifestContentTypeJumbfBox();
+    public void validateContentBinding(JumbfBox manifestJumbfBox, String assetUrl) throws MipamsException {
 
         JumbfBox assertionStoreJumbfBox = getAssertionStoreJumbfBox(manifestJumbfBox);
 
@@ -61,7 +59,7 @@ public class AssertionStoreConsumer {
             throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
         }
 
-        byte[] digest = ProvenanceUtils.computeSha256DigestOfFileContents(consumerRequest.getAssetUrl());
+        byte[] digest = ProvenanceUtils.computeSha256DigestOfFileContents(assetUrl);
 
         if (!Arrays.equals(assertion.getDigest(), digest)) {
 
@@ -110,10 +108,10 @@ public class AssertionStoreConsumer {
         }
     }
 
-    public void validateAssertionsIntegrity(String manifestId, List<AssertionRef> assertionReferenceList,
+    public void validateAssertionsIntegrity(String manifestId, List<UriReference> assertionReferenceList,
             JumbfBox assertionStoreJumbfBox) throws MipamsException {
 
-        Map<String, AssertionRef> uriToReferenceMap = new HashMap<>();
+        Map<String, UriReference> uriToReferenceMap = new HashMap<>();
 
         assertionReferenceList.forEach(assertionRef -> uriToReferenceMap.put(assertionRef.getUri(), assertionRef));
 
@@ -127,10 +125,10 @@ public class AssertionStoreConsumer {
     }
 
     private void verifyAssertionIntegrity(String manifestId, String assertionStoreLabel, JumbfBox assertionJumbfBox,
-            Map<String, AssertionRef> uriToReferenceMap) throws MipamsException {
+            Map<String, UriReference> uriToReferenceMap) throws MipamsException {
 
         String uri;
-        AssertionRef assertionRef;
+        UriReference assertionRef;
         String label = assertionJumbfBox.getDescriptionBox().getLabel();
 
         uri = ProvenanceUtils.getProvenanceJumbfURL(manifestId, assertionStoreLabel, label);

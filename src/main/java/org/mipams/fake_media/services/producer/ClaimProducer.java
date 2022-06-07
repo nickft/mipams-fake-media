@@ -22,7 +22,7 @@ import org.mipams.fake_media.entities.Claim;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
-import org.mipams.fake_media.entities.assertions.AssertionRef;
+import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.content_types.ClaimContentType;
 import org.mipams.fake_media.services.content_types.ClaimSignatureContentType;
@@ -48,17 +48,14 @@ public class ClaimProducer {
     public JumbfBox produce(String manifestId, ProducerRequest producerRequest, JumbfBox assertionStore,
             ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
-        List<AssertionRef> assertionHashedUriList = assertionRefProducer
+        List<UriReference> assertionHashedUriList = assertionRefProducer
                 .getAssertionReferenceListFromAssertionStore(manifestId, assertionStore);
-
-        List<String> redactedAssertionLabelList = assertionStoreProducer
-                .getRedactedAssertionsReferenceList(producerRequest.getRedactedAssertionList());
 
         List<String> encryptedJumbfBoxUriList = getEncryptedAssertionUriList(manifestId, assertionStore);
 
         Claim claim = new Claim();
         claim.setAssertionReferenceList(assertionHashedUriList);
-        claim.setRedactedAssertionsUriList(redactedAssertionLabelList);
+        claim.setRedactedAssertionsUriList(producerRequest.getRedactedAssertionUriList());
         claim.setEncryptedAssertionUriList(encryptedJumbfBoxUriList);
         claim.setClaimGeneratorDescription(producerRequest.getClaimGenerator().getDescription());
 

@@ -6,17 +6,19 @@ import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.crypto.services.KeyReaderService;
 import org.mipams.fake_media.entities.ClaimGenerator;
+import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 import org.mipams.fake_media.entities.assertions.ActionAssertion;
 import org.mipams.fake_media.entities.assertions.Assertion;
 import org.mipams.fake_media.entities.assertions.ThumbnailAssertion;
-import org.mipams.fake_media.entities.requests.ConsumerRequest;
 import org.mipams.fake_media.entities.requests.ProducerRequestBuilder;
-import org.mipams.fake_media.services.ProvenanceConsumer;
-import org.mipams.fake_media.services.ProvenanceProducer;
+import org.mipams.fake_media.services.AssertionFactory;
+import org.mipams.fake_media.services.consumer.ManifestConsumer;
 import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
+import org.mipams.fake_media.services.producer.ManifestProducer;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyPair;
@@ -24,6 +26,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.mipams.jumbf.core.entities.JumbfBox;
@@ -52,10 +56,10 @@ public class ProducerTest {
     Properties properties;
 
     @Autowired
-    ProvenanceProducer producer;
+    ManifestProducer producer;
 
     @Autowired
-    ProvenanceConsumer consumer;
+    ManifestConsumer consumer;
 
     @Autowired
     CoreGeneratorService coreGeneratorService;
@@ -63,10 +67,14 @@ public class ProducerTest {
     @Autowired
     JumbfBoxService jumbfBoxService;
 
+    @Autowired
+    AssertionFactory assertionFactory;
+
     @Test
     void testManifestProduction() throws Exception {
         Certificate cert = null;
-        try (FileInputStream fis = new FileInputStream(properties.getFileDirectory() + "/example/server.public.crt")) {
+        try (FileInputStream fis = new FileInputStream(
+                ResourceUtils.getFile("classpath:test.public.crt").getAbsolutePath())) {
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
@@ -78,14 +86,14 @@ public class ProducerTest {
 
         PublicKey pubKey = cert.getPublicKey();
         PrivateKey privKey = keyReaderService
-                .getPrivateKey(properties.getFileDirectory() + "/example/server.private.key");
+                .getPrivateKey(ResourceUtils.getFile("classpath:test.private.key").getAbsolutePath());
 
         KeyPair kp = new KeyPair(pubKey, privKey);
 
         ProvenanceSigner signer = new ProvenanceSigner();
         signer.setSigningScheme("SHA1withRSA");
         signer.setSigningCredentials(kp);
-        signer.setSigningCertificate(cert);
+        signer.setSigningCertificate((X509Certificate) cert);
 
         // Create Assertions
         ActionAssertion assertion1 = new ActionAssertion();
@@ -112,7 +120,18 @@ public class ProducerTest {
         ClaimGenerator claimGen = new ClaimGenerator();
         claimGen.setDescription("Mipams Generator 2.0 (Desktop)");
 
-        builder.setAssertionList(assertionList);
+        List<JumbfBox> assertionJumbfBoxList = new ArrayList<>();
+
+        ProvenanceMetadata provenanceMetadata = new ProvenanceMetadata();
+        provenanceMetadata.setParentDirectory(properties.getFileDirectory() + "/tmp");
+        File f = new File(properties.getFileDirectory() + "/tmp");
+        f.mkdir();
+
+        for (Assertion assertion : assertionList) {
+            assertionJumbfBoxList.add(assertionFactory.convertAssertionToJumbfBox(assertion, provenanceMetadata));
+        }
+
+        builder.setAssertionList(assertionJumbfBoxList);
         builder.setSigner(signer);
         builder.setClaimGenerator(claimGen);
 
@@ -130,6 +149,7 @@ public class ProducerTest {
         coreGeneratorService.generateJumbfMetadataToFile(List.of(manifestStoreBuilder.getResult()), outputFilePath);
         CoreUtils.deleteDir(
                 CoreUtils.getFullPath(properties.getFileDirectory(), manifestJumbfBox.getDescriptionBox().getLabel()));
+        CoreUtils.deleteDir(properties.getFileDirectory() + "/tmp");
 
         logger.info("Manifest box is stored in file " + outputFilePath);
     }
@@ -149,13 +169,10 @@ public class ProducerTest {
             manifestStoreJumbfBox = jumbfBoxService.parseFromJumbfFile(input, parseMetadata);
         }
 
-        ConsumerRequest consumerRequest = new ConsumerRequest();
-
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
-        consumerRequest.setAssetUrl(assetFileUrl);
-        consumerRequest.setManifestContentTypeJumbfBox((JumbfBox) manifestStoreJumbfBox.getContentBoxList().get(0));
 
-        consumer.verifyIntegrityOfManifestJumbfBox(consumerRequest);
+        consumer.verifyManifestIntegrityAndContentBinding((JumbfBox) manifestStoreJumbfBox.getContentBoxList().get(0),
+                assetFileUrl);
 
         CoreUtils.deleteDir(manifestDirectory);
     }

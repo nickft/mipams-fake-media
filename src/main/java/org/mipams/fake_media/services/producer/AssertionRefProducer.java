@@ -1,6 +1,5 @@
 package org.mipams.fake_media.services.producer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,15 +13,13 @@ import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.privacy_security.entities.ProtectionDescriptionBox;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
-import org.mipams.fake_media.entities.assertions.AssertionRef;
+import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AssertionRefProducer {
-
-    public static final String HASH_ALGORITHM = "SHA-256";
 
     @Autowired
     Properties properties;
@@ -33,10 +30,10 @@ public class AssertionRefProducer {
     @Autowired
     CoreGeneratorService coreGeneratorService;
 
-    public List<AssertionRef> getAssertionReferenceListFromAssertionStore(String manifestId, JumbfBox assertionStore)
+    public List<UriReference> getAssertionReferenceListFromAssertionStore(String manifestId, JumbfBox assertionStore)
             throws MipamsException {
 
-        List<AssertionRef> result = new ArrayList<>();
+        List<UriReference> result = new ArrayList<>();
 
         List<String> accessRulesJumbfBoxLabelList = getAccessRulesBoxLabelList(assertionStore);
         Map<String, JumbfBox> contentBoxMap = initializeContentBoxMap(assertionStore);
@@ -51,7 +48,7 @@ public class AssertionRefProducer {
 
             byte[] digest = calculateDigestForJumbfBox(jumbfBox, contentBoxMap);
             String uri = computeUriForAssertion(manifestId, assertionStore, jumbfBox);
-            AssertionRef ref = new AssertionRef(digest, uri, HASH_ALGORITHM);
+            UriReference ref = new UriReference(digest, uri, UriReference.SUPPORTED_HASH_ALGORITHM);
             result.add(ref);
         }
         return result;
@@ -106,7 +103,7 @@ public class AssertionRefProducer {
             return ProvenanceUtils.computeSha256DigestOfFileContents(tempFilePath);
 
         } finally {
-            deleteFile(tempFilePath);
+            CoreUtils.deleteFile(tempFilePath);
         }
     }
 
@@ -116,9 +113,13 @@ public class AssertionRefProducer {
 
         if (isProtectionContentTypeJumbfBox(jumbfBox)) {
             ProtectionDescriptionBox pdBox = (ProtectionDescriptionBox) jumbfBox.getContentBoxList().get(0);
-            JumbfBox accessRulesJumbfBox = contentBoxMap.get(pdBox.getArLabel());
 
-            boxesToHash = List.of(jumbfBox, accessRulesJumbfBox);
+            boxesToHash = List.of(jumbfBox);
+
+            if (pdBox.getArLabel() != null) {
+                JumbfBox accessRulesJumbfBox = contentBoxMap.get(pdBox.getArLabel());
+                boxesToHash.add(accessRulesJumbfBox);
+            }
         } else {
             boxesToHash = List.of(jumbfBox);
         }
@@ -128,13 +129,6 @@ public class AssertionRefProducer {
 
     private boolean isProtectionContentTypeJumbfBox(JumbfBox jumbfBox) {
         return jumbfBox.getDescriptionBox().getUuid().equals(protectionContentType.getContentTypeUuid());
-    }
-
-    private void deleteFile(String tempFilePath) {
-        File f = new File(tempFilePath);
-        if (f.exists()) {
-            f.delete();
-        }
     }
 
     private String computeUriForAssertion(String manifestId, JumbfBox assertionStore, JumbfBox jumbfBox) {

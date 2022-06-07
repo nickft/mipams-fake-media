@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @NoArgsConstructor
 @ToString
-public class ThumbnailAssertion extends AbstractAssertion implements RedactableAssertion {
+public class ThumbnailAssertion implements NonRedactableAssertion {
     private @Getter @Setter String fileName;
     private @Getter @Setter String mediaType;
 }

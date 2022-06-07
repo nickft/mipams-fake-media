@@ -1,4 +1,4 @@
-package org.mipams.fake_media.services;
+package org.mipams.fake_media.services.producer;
 
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.CoreUtils;
@@ -7,10 +7,8 @@ import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
+import org.mipams.fake_media.services.ManifestDiscovery;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
-import org.mipams.fake_media.services.producer.AssertionStoreProducer;
-import org.mipams.fake_media.services.producer.ClaimProducer;
-import org.mipams.fake_media.services.producer.ClaimSignatureProducer;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ProvenanceProducer {
+public class ManifestProducer {
 
-        private static final Logger logger = LoggerFactory.getLogger(ProvenanceProducer.class);
+        private static final Logger logger = LoggerFactory.getLogger(ManifestProducer.class);
 
         @Autowired
         ClaimProducer claimProducer;
@@ -97,13 +95,15 @@ public class ProvenanceProducer {
         private JumbfBox generateAssertionStoreForUpdateManifest(ProducerRequest producerRequest,
                         ProvenanceMetadata provenanceMetadata)
                         throws MipamsException {
-                return assertionStoreProducer.produce(producerRequest, provenanceMetadata);
+                return assertionStoreProducer.produce(producerRequest.getAssertionList(), provenanceMetadata);
         }
 
         private JumbfBox generateAssertionStoreForStandardManifest(ProducerRequest producerRequest,
                         ProvenanceMetadata provenanceMetadata)
                         throws MipamsException {
-                JumbfBox assertionStoreJumbfBox = assertionStoreProducer.produce(producerRequest, provenanceMetadata);
+
+                JumbfBox assertionStoreJumbfBox = assertionStoreProducer.produce(producerRequest.getAssertionList(),
+                                provenanceMetadata);
 
                 String assetUrl = producerRequest.getAssetUrl();
                 assertionStoreProducer.addContentBindingAssertion(assertionStoreJumbfBox, assetUrl, provenanceMetadata);

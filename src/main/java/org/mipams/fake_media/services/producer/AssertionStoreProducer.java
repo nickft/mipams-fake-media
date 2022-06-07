@@ -1,36 +1,24 @@
 package org.mipams.fake_media.services.producer;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.mipams.jumbf.core.entities.BinaryDataBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.crypto.entities.CryptoException;
-import org.mipams.jumbf.crypto.entities.request.CryptoRequest;
 import org.mipams.jumbf.crypto.services.CryptoService;
-import org.mipams.jumbf.privacy_security.entities.ProtectionDescriptionBox;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
-import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
-import org.mipams.fake_media.entities.ProvenanceSigner;
-import org.mipams.fake_media.entities.assertions.Assertion;
-import org.mipams.fake_media.entities.assertions.AssertionFactory;
 import org.mipams.fake_media.entities.assertions.BindingAssertion;
-import org.mipams.fake_media.entities.assertions.RedactableAssertion;
-import org.mipams.fake_media.entities.requests.ProducerRequest;
+import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,11 +42,10 @@ public class AssertionStoreProducer {
     @Autowired
     CryptoService cryptoService;
 
-    public JumbfBox produce(ProducerRequest producerRequest, ProvenanceMetadata provenanceMetadata)
+    public JumbfBox produce(List<JumbfBox> requestAssertionJumbfBoxList, ProvenanceMetadata provenanceMetadata)
             throws MipamsException {
 
-        List<JumbfBox> deterministicAssertionJumbfBoxList = generateAssertionJumbfBoxes(producerRequest,
-                provenanceMetadata);
+        List<JumbfBox> deterministicAssertionJumbfBoxList = new ArrayList<>(requestAssertionJumbfBoxList);
 
         ensureLabelUniquenessInAssertionStore(deterministicAssertionJumbfBoxList);
 
@@ -79,109 +66,124 @@ public class AssertionStoreProducer {
         return assertionStoreBuilder.getResult();
     }
 
-    private List<JumbfBox> generateAssertionJumbfBoxes(ProducerRequest producerRequest,
-            ProvenanceMetadata provenanceMetadata) throws MipamsException {
-        List<JumbfBox> assertionStore = new ArrayList<>();
-        String jumbfFilePath = "";
+    // private List<JumbfBox> generateAssertionJumbfBoxes(ProducerRequest
+    // producerRequest,
+    // ProvenanceMetadata provenanceMetadata) throws MipamsException {
+    // List<JumbfBox> assertionStore = new ArrayList<>();
+    // String jumbfFilePath = "";
 
-        for (Assertion assertion : producerRequest.getAssertionList()) {
+    // for (JumbfBox assertion : producerRequest.getAssertionList()) {
 
-            JumbfBox assertionJumbfBox = assertionFactory.convertAssertionToJumbfBox(assertion, provenanceMetadata);
-            JumbfBox accessRulesJumbfBox = assertion.getAccessRulesJumbfBoxOrNull();
+    // if (assertion.isProtectedFlagSet()) {
 
-            if (accessRulesJumbfBox != null) {
+    // try {
+    // jumbfFilePath = writeJumbfBoxToAFile(assertionJumbfBox, provenanceMetadata);
 
-                String accessRulesJumbfBoxLabel = accessRulesJumbfBox.getDescriptionBox().getLabel();
+    // String encryptedContentFilePath =
+    // encryptFileContent(producerRequest.getSigner(),
+    // producerRequest.getIvHexEncoded(), jumbfFilePath);
 
-                if (accessRulesJumbfBoxLabel == null) {
-                    throw new MipamsException(
-                            String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Access Rules JUMBF Box"));
-                }
+    // String jumbfBoxLabel = assertionJumbfBox.getDescriptionBox().getLabel();
 
-                try {
-                    jumbfFilePath = writeJumbfBoxToAFile(assertionJumbfBox, provenanceMetadata);
+    // JumbfBox accessRulesJumbfBox = assertion.getAccessRulesJumbfBoxOrNull();
+    // String accessRulesJumbfBoxLabel = null;
 
-                    String encryptedContentFilePath = encryptFileContent(producerRequest.getSigner(),
-                            producerRequest.getIvHexEncoded(), jumbfFilePath);
+    // if (accessRulesJumbfBox != null) {
 
-                    String jumbfBoxLabel = assertionJumbfBox.getDescriptionBox().getLabel();
+    // accessRulesJumbfBoxLabel =
+    // accessRulesJumbfBox.getDescriptionBox().getLabel();
+    // if (accessRulesJumbfBoxLabel == null) {
+    // throw new MipamsException(
+    // String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Access Rules JUMBF
+    // Box"));
+    // }
 
-                    JumbfBox protectionJumbfBox = buildProtectionBox(producerRequest.getSigner(),
-                            producerRequest.getIvHexEncoded(), jumbfBoxLabel, accessRulesJumbfBoxLabel,
-                            encryptedContentFilePath);
+    // assertionStore.add(accessRulesJumbfBox);
+    // }
 
-                    assertionStore.add(protectionJumbfBox);
-                    assertionStore.add(accessRulesJumbfBox);
-                } finally {
-                    ProvenanceUtils.deleteFile(jumbfFilePath);
-                }
-            } else {
-                assertionStore.add(assertionJumbfBox);
-            }
-        }
+    // JumbfBox protectionJumbfBox = buildProtectionBox(producerRequest.getSigner(),
+    // producerRequest.getIvHexEncoded(), jumbfBoxLabel, accessRulesJumbfBoxLabel,
+    // encryptedContentFilePath);
 
-        return assertionStore;
-    }
+    // assertionStore.add(protectionJumbfBox);
 
-    private String writeJumbfBoxToAFile(JumbfBox assertionJumbfBox, ProvenanceMetadata provenanceMetadata)
-            throws MipamsException {
+    // } finally {
+    // ProvenanceUtils.deleteFile(jumbfFilePath);
+    // }
+    // } else {
+    // assertionStore.add(assertionJumbfBox);
+    // }
+    // }
 
-        String jumbfBoxFileName = CoreUtils.randomStringGenerator();
-        String jumbfBoxFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), jumbfBoxFileName);
+    // return assertionStore;
+    // }
 
-        try (OutputStream fos = new FileOutputStream(jumbfBoxFilePath)) {
-            jumbfBoxService.writeToJumbfFile(assertionJumbfBox, fos);
-        } catch (IOException e) {
-            throw new MipamsException(ProvenanceErrorMessages.JUMBF_BOX_CREATION_ERROR, e);
-        }
+    // private String writeJumbfBoxToAFile(JumbfBox assertionJumbfBox,
+    // ProvenanceMetadata provenanceMetadata)
+    // throws MipamsException {
 
-        return jumbfBoxFilePath;
-    }
+    // String jumbfBoxFileName = CoreUtils.randomStringGenerator();
+    // String jumbfBoxFilePath =
+    // CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(),
+    // jumbfBoxFileName);
 
-    private String encryptFileContent(ProvenanceSigner signer, String ivAsString, String jumbfFilePath)
-            throws MipamsException {
+    // try (OutputStream fos = new FileOutputStream(jumbfBoxFilePath)) {
+    // jumbfBoxService.writeToJumbfFile(assertionJumbfBox, fos);
+    // } catch (IOException e) {
+    // throw new MipamsException(ProvenanceErrorMessages.JUMBF_BOX_CREATION_ERROR,
+    // e);
+    // }
 
-        if (!signer.getEncryptionScheme().equals("AES-256")) {
-            throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_ENCRYPTION);
-        }
+    // return jumbfBoxFilePath;
+    // }
 
-        CryptoRequest encryptionRequest = new CryptoRequest();
+    // private String encryptFileContent(ProvenanceSigner signer, String ivAsString,
+    // String jumbfFilePath)
+    // throws MipamsException {
 
-        encryptionRequest.setCryptoMethod(signer.getEncryptionScheme());
-        encryptionRequest.setIv(ivAsString);
-        encryptionRequest.setContentFileUrl(jumbfFilePath);
+    // if (!signer.getEncryptionScheme().equals("AES-256")) {
+    // throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_ENCRYPTION);
+    // }
 
-        try {
-            cryptoService.encryptDocument(signer.getEncryptionKey(), encryptionRequest);
-        } catch (CryptoException e) {
-            throw new MipamsException(ProvenanceErrorMessages.ENCRYPTION_ERROR, e);
-        }
+    // CryptoRequest encryptionRequest = new CryptoRequest();
 
-        return null;
-    }
+    // encryptionRequest.setCryptoMethod(signer.getEncryptionScheme());
+    // encryptionRequest.setIv(ivAsString);
+    // encryptionRequest.setContentFileUrl(jumbfFilePath);
 
-    private JumbfBox buildProtectionBox(ProvenanceSigner signer, String ivAsString, String assertionLabel,
-            String accessRulesLabel, String encryptedContentFilePath) throws MipamsException {
+    // try {
+    // cryptoService.encryptDocument(signer.getEncryptionKey(), encryptionRequest);
+    // } catch (CryptoException e) {
+    // throw new MipamsException(ProvenanceErrorMessages.ENCRYPTION_ERROR, e);
+    // }
 
-        JumbfBoxBuilder builder = new JumbfBoxBuilder();
+    // return null;
+    // }
 
-        builder.setJumbfBoxAsRequestable();
-        builder.setLabel(assertionLabel);
-        builder.setContentType(protectionContentType);
+    // private JumbfBox buildProtectionBox(ProvenanceSigner signer, String
+    // ivAsString, String assertionLabel,
+    // String accessRulesLabel, String encryptedContentFilePath) throws
+    // MipamsException {
 
-        ProtectionDescriptionBox pdBox = new ProtectionDescriptionBox();
-        pdBox.setAes256CbcWithIvProtection();
-        pdBox.setIv(DatatypeConverter.parseBase64Binary(ivAsString));
-        pdBox.setArLabel(accessRulesLabel);
+    // JumbfBoxBuilder builder = new JumbfBoxBuilder();
 
-        BinaryDataBox bdBox = new BinaryDataBox();
-        bdBox.setFileUrl(encryptedContentFilePath);
+    // builder.setJumbfBoxAsRequestable();
+    // builder.setLabel(assertionLabel);
+    // builder.setContentType(protectionContentType);
 
-        builder.appendContentBox(pdBox);
-        builder.appendContentBox(bdBox);
+    // ProtectionDescriptionBox pdBox = new ProtectionDescriptionBox();
+    // pdBox.setAes256CbcWithIvProtection();
+    // pdBox.setIv(DatatypeConverter.parseBase64Binary(ivAsString));
+    // pdBox.setArLabel(accessRulesLabel);
 
-        return builder.getResult();
-    }
+    // BinaryDataBox bdBox = new BinaryDataBox();
+    // bdBox.setFileUrl(encryptedContentFilePath);
+
+    // builder.appendContentBox(pdBox);
+    // builder.appendContentBox(bdBox);
+
+    // return builder.getResult();
+    // }
 
     private void ensureLabelUniquenessInAssertionStore(List<JumbfBox> assertionJumbfBoxList) throws MipamsException {
 
@@ -198,7 +200,8 @@ public class AssertionStoreProducer {
                 continue;
             }
 
-            String uniqueLabel = String.format("%s_%d", commonLabel, occurences);
+            String uniqueLabel = String.format(ProvenanceUtils.ASSERTION_LABEL_MULTIPLE_INSTANCE_FORMAT, commonLabel,
+                    occurences);
             assertion.getDescriptionBox().setLabel(uniqueLabel);
             assertion.getDescriptionBox().updateBmffHeadersBasedOnBox();
 
@@ -287,56 +290,4 @@ public class AssertionStoreProducer {
 
         assertionStoreJumbfBox.getContentBoxList().add(contentBindingJumbfBox);
     }
-
-    public List<String> getRedactedAssertionsReferenceList(List<RedactableAssertion> redactedAssertionList)
-            throws MipamsException {
-
-        if (redactedAssertionList == null) {
-            return null;
-        }
-
-        List<String> redactedAssertionUriList = new ArrayList<>();
-
-        Integer occurences;
-        String label;
-
-        Map<String, Integer> labelOccurenceMap = new HashMap<>();
-
-        for (Assertion assertion : redactedAssertionList) {
-
-            label = assertionFactory.getBaseLabel(assertion);
-            occurences = labelOccurenceMap.get(label);
-
-            if (occurences == null) {
-                occurences = 0;
-            }
-
-            labelOccurenceMap.put(label, ++occurences);
-        }
-
-        String updatedLabel;
-
-        for (Assertion assertion : new ArrayList<>(redactedAssertionList)) {
-            label = assertionFactory.getBaseLabel(assertion);
-
-            if (labelOccurenceMap.get(label) == 1) {
-                updatedLabel = String.format("%s_%s", label, "redacted");
-                redactedAssertionUriList.add(updatedLabel);
-                redactedAssertionList.remove(assertion);
-            }
-        }
-
-        for (Assertion assertion : redactedAssertionList) {
-            label = assertionFactory.getBaseLabel(assertion);
-
-            occurences = labelOccurenceMap.get(label);
-
-            String uniqueLabel = String.format("%s_%s_%d", label, "redacted", occurences);
-
-            redactedAssertionUriList.add(uniqueLabel);
-        }
-
-        return redactedAssertionUriList;
-    }
-
 }

@@ -1,4 +1,4 @@
-package org.mipams.fake_media.entities.assertions;
+package org.mipams.fake_media.services;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +24,11 @@ import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
+import org.mipams.fake_media.entities.assertions.ActionAssertion;
+import org.mipams.fake_media.entities.assertions.Assertion;
+import org.mipams.fake_media.entities.assertions.BindingAssertion;
+import org.mipams.fake_media.entities.assertions.IngredientAssertion;
+import org.mipams.fake_media.entities.assertions.ThumbnailAssertion;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +43,7 @@ public class AssertionFactory {
         CONTENT_BINDING("mp.binding", false),
         ACTION("mp.actions", false),
         INGREDIENT("mp.ingredient", false),
-        THUMBNAIL("mp.thumbnail", true);
+        THUMBNAIL("mp.thumbnail", false);
 
         private @Getter String label;
         private @Getter boolean redactable;
@@ -51,9 +56,13 @@ public class AssertionFactory {
         public static MipamsAssertion getTypeFromLabel(String label) {
             MipamsAssertion result = null;
 
+            if (label == null) {
+                return null;
+            }
+
             for (MipamsAssertion type : values()) {
 
-                if (type.getLabel().equals(label)) {
+                if (label.startsWith(type.getLabel())) {
                     result = type;
                     break;
                 }
@@ -79,16 +88,6 @@ public class AssertionFactory {
     public String getBaseLabel(Assertion assertion) throws MipamsException {
         MipamsAssertion type = getMipamsAssertionType(assertion);
         return type.getLabel();
-    }
-
-    public boolean isRedactable(Assertion assertion) throws MipamsException {
-        MipamsAssertion type = getMipamsAssertionType(assertion);
-        return type.isRedactable();
-    }
-
-    public boolean isIngredientAssertion(Assertion assertion) throws MipamsException {
-        MipamsAssertion type = getMipamsAssertionType(assertion);
-        return type.equals(MipamsAssertion.INGREDIENT);
     }
 
     public boolean labelReferencesContentBindingAssertion(String label) {
@@ -145,7 +144,7 @@ public class AssertionFactory {
 
         switch (type) {
             case THUMBNAIL:
-                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion, metadata);
+                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion);
                 break;
             case CONTENT_BINDING:
             case ACTION:
@@ -247,8 +246,8 @@ public class AssertionFactory {
         }
     }
 
-    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion,
-            ProvenanceMetadata metadata) throws MipamsException {
+    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion)
+            throws MipamsException {
 
         String assertionFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), assertion.getFileName());
 

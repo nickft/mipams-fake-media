@@ -1,17 +1,13 @@
 package org.mipams.fake_media.entities;
 
 import java.security.KeyPair;
-import java.security.cert.Certificate;
-
-import javax.crypto.SecretKey;
+import java.security.cert.X509Certificate;
 
 import lombok.Getter;
 import lombok.Setter;
 
 public class ProvenanceSigner {
-    private @Getter @Setter KeyPair signingCredentials;
+    private @Getter @Setter KeyPair signingCredentials; // signer.getSigningCertificate().getSubjectX500Principal()
     private @Getter @Setter String signingScheme;
-    private @Getter @Setter Certificate signingCertificate;
-    private @Getter @Setter SecretKey encryptionKey;
-    private @Getter @Setter String encryptionScheme;
+    private @Getter @Setter X509Certificate signingCertificate;
 }

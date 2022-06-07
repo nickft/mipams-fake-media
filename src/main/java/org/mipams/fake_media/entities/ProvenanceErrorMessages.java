@@ -10,7 +10,7 @@ public class ProvenanceErrorMessages {
     public static final String EMPTY_LABEL = "%s shall contain a non-empty label";
 
     public static final String STANDARD_MANIFEST_CONTENT_BINDING = "A Standard Manifest must contain at least one Content Binding Assertion";
-    public static final String UPDATE_MANIFEST_CONTENT_BINDING = "An Update Manifest must contain exactly one assertion which is an Ingredient Assertion";
+    public static final String UPDATE_MANIFEST_CONTENT_BINDING = "An Update Manifest must contain exactly one assertion which is an Ingredient Assertion with parentOf relationship";
     public static final String CLAIM_INVALID_CONTENT = "Only a CBOR box is allowed in a Claim Content type JUMBF box";
     public static final String MANIFEST_UNIQUE_UUID = "Only one JUMBF Box with content type %s is supported in a Manifest";
 
@@ -36,5 +36,8 @@ public class ProvenanceErrorMessages {
     public static final String CONTENT_BINDING_MISMATCH = "Content Binding Mismatch. Asset digest does not match with the asserted digest.";
     public static final String UNREFERENCED_ASSERTION = "Found an Assertion JUMBF box that is not included in the Claim";
     public static final String ASSERTION_DIGEST_MISMATCH = "Assertion with label %s is corrupted. Expected digest in the Claim does not match with the digest of the assertion in the Assertion Store.";
+    public static final String INGREDIENT_REFERENCE_DIGEST_MISMATCH = "Expected digest in the Ingredient Reference %s does not match with the compute ddigest of the Manifest JUMBF Box";
+    public static final String REDACTION_PROCESS_MISMATCH = "Mismatch during redaction process. Assertions Expected: [%d] Found [%d]";
+    public static final String PARENT_INGREDIENT_NOT_FOUND = "Could not locate Parent Ingredient Reference pointing to %s";
 
 }

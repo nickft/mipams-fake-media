@@ -4,9 +4,8 @@ import java.util.List;
 
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.MipamsException;
-import org.mipams.fake_media.entities.assertions.Assertion;
-import org.mipams.fake_media.entities.assertions.AssertionFactory;
 import org.mipams.fake_media.entities.assertions.IngredientAssertion;
+import org.mipams.fake_media.services.AssertionFactory.MipamsAssertion;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
 import org.mipams.fake_media.services.content_types.StandardManifestContentType;
 import org.mipams.fake_media.services.content_types.UpdateManifestContentType;
@@ -41,7 +40,7 @@ public class ManifestDiscovery {
         return manifestContentType;
     }
 
-    public ManifestContentType discoverManifestType(List<Assertion> assertionList) throws MipamsException {
+    public ManifestContentType discoverManifestType(List<JumbfBox> assertionList) throws MipamsException {
 
         ManifestContentType manifestContentType;
 
@@ -55,25 +54,33 @@ public class ManifestDiscovery {
         return manifestContentType;
     }
 
-    private boolean containsRedactableAssertionsOnly(List<Assertion> assertionList) throws MipamsException {
+    private boolean containsRedactableAssertionsOnly(List<JumbfBox> assertionList) throws MipamsException {
 
         boolean result = true;
+        String label;
+        MipamsAssertion type;
 
-        for (Assertion assertion : assertionList) {
-            result = result && assertionFactory.isRedactable(assertion);
+        for (JumbfBox assertion : assertionList) {
+            label = assertion.getDescriptionBox().getLabel();
+            type = MipamsAssertion.getTypeFromLabel(label);
+
+            result = result && type.isRedactable();
         }
 
         return result;
     }
 
-    private boolean containsIngredientAssertionReferencingParentManifest(List<Assertion> assertionList)
+    private boolean containsIngredientAssertionReferencingParentManifest(List<JumbfBox> assertionList)
             throws MipamsException {
 
         IngredientAssertion ingredientAssertion = null;
+        String label;
+        for (JumbfBox assertion : assertionList) {
 
-        for (Assertion assertion : assertionList) {
-            if (assertionFactory.isIngredientAssertion(assertion)) {
-                ingredientAssertion = (IngredientAssertion) assertion;
+            label = assertion.getDescriptionBox().getLabel();
+
+            if (MipamsAssertion.getTypeFromLabel(label).equals(MipamsAssertion.INGREDIENT)) {
+                ingredientAssertion = (IngredientAssertion) assertionFactory.convertJumbfBoxToAssertion(assertion);
 
                 if (!"parentOf".equals(ingredientAssertion.getRelationship())) {
                     ingredientAssertion = null;

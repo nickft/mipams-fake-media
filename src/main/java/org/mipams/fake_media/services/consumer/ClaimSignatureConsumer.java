@@ -68,7 +68,7 @@ public class ClaimSignatureConsumer {
         }
     }
 
-    private ClaimSignature deserializeClaimSignatureJumbfBox(JumbfBox claimSignatureJumbfBox) throws MipamsException {
+    public ClaimSignature deserializeClaimSignatureJumbfBox(JumbfBox claimSignatureJumbfBox) throws MipamsException {
 
         CborBox claimSignatureCborBox = (CborBox) claimSignatureJumbfBox.getContentBoxList().get(0);
 

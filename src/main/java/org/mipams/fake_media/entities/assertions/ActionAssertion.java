@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @NoArgsConstructor
 @ToString
-public class ActionAssertion extends AbstractAssertion {
+public class ActionAssertion implements NonRedactableAssertion {
     private @Getter @Setter String action;
     private @Getter @Setter String date;
     private @Getter @Setter String changed;
