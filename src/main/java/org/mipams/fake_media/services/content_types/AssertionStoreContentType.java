@@ -29,7 +29,7 @@ public class AssertionStoreContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "mipams.provenance.assertions";
+        return "mpms.provenance.assertions";
     }
 
     @Override

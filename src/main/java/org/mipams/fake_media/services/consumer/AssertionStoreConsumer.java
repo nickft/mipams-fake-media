@@ -60,6 +60,7 @@ public class AssertionStoreConsumer {
         }
 
         byte[] digest = ProvenanceUtils.computeSha256DigestOfFileContents(assetUrl);
+        logger.debug(String.format("Checking hash digest for asset: %s", assetUrl));
 
         if (!Arrays.equals(assertion.getDigest(), digest)) {
 

@@ -25,7 +25,7 @@ public abstract class ManifestContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "Digital asset id";
+        return "urn:uuid";
     }
 
     @Override

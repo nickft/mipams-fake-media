@@ -3,8 +3,12 @@ package org.mipams.fake_media.entities.assertions;
 import org.mipams.fake_media.entities.UriReference;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
+@NoArgsConstructor
+@ToString
 public class IngredientAssertion implements NonRedactableAssertion {
 
     public final static String RELATIONSHIP_PARENT_OF = "parentOf";

@@ -9,6 +9,7 @@ import org.mipams.fake_media.services.AssertionFactory.MipamsAssertion;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
 import org.mipams.fake_media.services.content_types.StandardManifestContentType;
 import org.mipams.fake_media.services.content_types.UpdateManifestContentType;
+import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +45,7 @@ public class ManifestDiscovery {
 
         ManifestContentType manifestContentType;
 
-        if (containsRedactableAssertionsOnly(assertionList)
+        if (ProvenanceUtils.containsRedactableAssertionsOnly(assertionList)
                 && containsIngredientAssertionReferencingParentManifest(assertionList)) {
             manifestContentType = updateManifestContentType;
         } else {
@@ -52,22 +53,6 @@ public class ManifestDiscovery {
         }
 
         return manifestContentType;
-    }
-
-    private boolean containsRedactableAssertionsOnly(List<JumbfBox> assertionList) throws MipamsException {
-
-        boolean result = true;
-        String label;
-        MipamsAssertion type;
-
-        for (JumbfBox assertion : assertionList) {
-            label = assertion.getDescriptionBox().getLabel();
-            type = MipamsAssertion.getTypeFromLabel(label);
-
-            result = result && type.isRedactable();
-        }
-
-        return result;
     }
 
     private boolean containsIngredientAssertionReferencingParentManifest(List<JumbfBox> assertionList)

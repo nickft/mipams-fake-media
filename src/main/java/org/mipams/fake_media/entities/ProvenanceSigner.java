@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ProvenanceSigner {
-    private @Getter @Setter KeyPair signingCredentials; // signer.getSigningCertificate().getSubjectX500Principal()
+    private @Getter @Setter KeyPair signingCredentials;
     private @Getter @Setter String signingScheme;
     private @Getter @Setter X509Certificate signingCertificate;
 }

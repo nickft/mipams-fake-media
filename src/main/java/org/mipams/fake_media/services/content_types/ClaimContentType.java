@@ -28,7 +28,7 @@ public class ClaimContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "mipams.provenance.claim";
+        return "mpms.provenance.claim";
     }
 
     @Override

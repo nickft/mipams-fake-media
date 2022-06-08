@@ -105,9 +105,8 @@ public class ManifestProducer {
                                 provenanceMetadata);
 
                 String assetUrl = producerRequest.getAssetUrl();
-                assertionStoreProducer.addContentBindingAssertion(assertionStoreJumbfBox, assetUrl, provenanceMetadata);
-
-                return assertionStoreJumbfBox;
+                return assertionStoreProducer.getAssertionStoreWithContentBindingAssertion(assertionStoreJumbfBox,
+                                assetUrl, provenanceMetadata);
         }
 
 }

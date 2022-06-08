@@ -8,7 +8,7 @@ import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.entities.responses.ManifestStoreResponse;
-import org.mipams.fake_media.services.consumer.ManifestConsumer;
+import org.mipams.fake_media.services.UriReferenceService;
 import org.mipams.fake_media.services.consumer.ManifestStoreConsumer;
 import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
 import org.mipams.fake_media.utils.ProvenanceUtils;
@@ -35,17 +35,20 @@ public class ManifestStoreProducer {
     ManifestProducer manifestProducer;
 
     @Autowired
-    ManifestConsumer manifestConsumer;
+    UriReferenceService uriReferenceService;
 
     public final JumbfBox createManifestStore(ProducerRequest producerRequest) throws MipamsException {
 
-        JumbfBox manifestStoreJumbfBox = producerRequest.getManifestStoreJumbfBox();
+        JumbfBox currentManifestStoreJumbfBox = producerRequest.getManifestStoreJumbfBox();
 
-        if (manifestStoreJumbfBox != null) {
+        JumbfBoxBuilder manifestStoreJumbfBoxBuilder;
+        if (currentManifestStoreJumbfBox != null) {
+
+            manifestStoreJumbfBoxBuilder = new JumbfBoxBuilder(currentManifestStoreJumbfBox);
 
             logger.debug("There is already manifest store in the digital asset");
 
-            ManifestStoreResponse response = manifestStoreConsumer.consumeActiveManifest(manifestStoreJumbfBox,
+            ManifestStoreResponse response = manifestStoreConsumer.consumeActiveManifest(currentManifestStoreJumbfBox,
                     producerRequest.getAssetUrl());
 
             String activeManifestId = response.getManifestResponseMap().keySet().iterator().next();
@@ -53,12 +56,14 @@ public class ManifestStoreProducer {
 
             logger.debug("Active manifest: " + activeManifestUri);
 
-            JumbfBox activeManifestJumbfBox = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
+            JumbfBox activeManifestJumbfBox = ProvenanceUtils.locateManifestFromUri(currentManifestStoreJumbfBox,
                     activeManifestUri);
 
             validateDigestForParentIngredientRelationship(activeManifestJumbfBox, producerRequest.getAssertionList());
+
+            manifestStoreJumbfBoxBuilder = new JumbfBoxBuilder(currentManifestStoreJumbfBox);
         } else {
-            manifestStoreJumbfBox = createEmptyManifestStoreJumbfBox();
+            manifestStoreJumbfBoxBuilder = createEmptyManifestStoreJumbfBoxBuilder();
             logger.debug("Creating new Manifest Store");
         }
 
@@ -70,12 +75,12 @@ public class ManifestStoreProducer {
             validateComponentIngredientReferenceDigests(manifestJumbfBox,
                     producerRequest.getComponentManifestJumbfBoxList());
 
-            manifestStoreJumbfBox.getContentBoxList().addAll(producerRequest.getComponentManifestJumbfBoxList());
+            manifestStoreJumbfBoxBuilder.appendAllContentBoxes(producerRequest.getComponentManifestJumbfBoxList());
         }
 
-        manifestStoreJumbfBox.getContentBoxList().add(manifestJumbfBox);
+        manifestStoreJumbfBoxBuilder.appendContentBox(manifestJumbfBox);
 
-        return manifestStoreJumbfBox;
+        return manifestStoreJumbfBoxBuilder.getResult();
     }
 
     private void validateDigestForParentIngredientRelationship(JumbfBox activeManifestJumbfBox,
@@ -96,7 +101,7 @@ public class ManifestStoreProducer {
                     .checkIfAssertionIsParentIngredientAndGetUriReference(assertionJumbfBox);
 
             if (manifestReference != null && manifestReference.getUri().equals(targetUriReference)) {
-                manifestConsumer.verifyManifestUriReference(activeManifestJumbfBox, manifestReference);
+                uriReferenceService.verifyManifestUriReference(activeManifestJumbfBox, manifestReference);
                 return;
             }
         }
@@ -106,14 +111,14 @@ public class ManifestStoreProducer {
 
     }
 
-    private JumbfBox createEmptyManifestStoreJumbfBox() throws MipamsException {
+    private JumbfBoxBuilder createEmptyManifestStoreJumbfBoxBuilder() throws MipamsException {
         JumbfBoxBuilder builder = new JumbfBoxBuilder();
 
         builder.setJumbfBoxAsRequestable();
         builder.setContentType(manifestStoreContentType);
         builder.setLabel(manifestStoreContentType.getLabel());
 
-        return builder.getResult();
+        return builder;
     }
 
     private void validateComponentIngredientReferenceDigests(JumbfBox manifestJumbfBox,
@@ -143,7 +148,7 @@ public class ManifestStoreProducer {
             ingredientReference = uriToReferenceMap.get(ingredientManifestUri);
 
             if (ingredientReference != null) {
-                manifestConsumer.verifyManifestUriReference(ingredientManifest, ingredientReference);
+                uriReferenceService.verifyManifestUriReference(ingredientManifest, ingredientReference);
             }
         }
     }

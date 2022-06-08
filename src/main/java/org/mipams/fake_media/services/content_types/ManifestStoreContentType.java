@@ -35,7 +35,7 @@ public class ManifestStoreContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "mipams.provenance";
+        return "mpms.provenance";
     }
 
     @Override

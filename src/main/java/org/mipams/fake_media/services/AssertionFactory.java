@@ -27,6 +27,7 @@ import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.assertions.ActionAssertion;
 import org.mipams.fake_media.entities.assertions.Assertion;
 import org.mipams.fake_media.entities.assertions.BindingAssertion;
+import org.mipams.fake_media.entities.assertions.ExifMetadataAssertion;
 import org.mipams.fake_media.entities.assertions.IngredientAssertion;
 import org.mipams.fake_media.entities.assertions.ThumbnailAssertion;
 import org.mipams.fake_media.utils.ProvenanceUtils;
@@ -43,7 +44,8 @@ public class AssertionFactory {
         CONTENT_BINDING("mp.binding", false),
         ACTION("mp.actions", false),
         INGREDIENT("mp.ingredient", false),
-        THUMBNAIL("mp.thumbnail", false);
+        THUMBNAIL("mp.thumbnail", false),
+        EXIF("stds.exif", true);
 
         private @Getter String label;
         private @Getter boolean redactable;
@@ -94,6 +96,17 @@ public class AssertionFactory {
         return MipamsAssertion.CONTENT_BINDING.getLabel().equals(label);
     }
 
+    public MipamsAssertion getAssertionTypeFromJumbfBox(JumbfBox assertionJumbfBox) throws MipamsException {
+        String label = assertionJumbfBox.getDescriptionBox().getLabel();
+        MipamsAssertion type = MipamsAssertion.getTypeFromLabel(label);
+
+        return type;
+    }
+
+    public boolean isJumbfBoxAnAssertion(JumbfBox assertionJumbfBox) throws MipamsException {
+        return getAssertionTypeFromJumbfBox(assertionJumbfBox) != null;
+    }
+
     public Assertion convertJumbfBoxToAssertion(JumbfBox assertionJumbfBox) throws MipamsException {
 
         Assertion result;
@@ -114,6 +127,9 @@ public class AssertionFactory {
                 break;
             case INGREDIENT:
                 result = ProvenanceUtils.deserializeCborJumbfBox(assertionJumbfBox, IngredientAssertion.class);
+                break;
+            case EXIF:
+                result = ProvenanceUtils.deserializeJsonJumbfBox(assertionJumbfBox, ExifMetadataAssertion.class);
                 break;
             default:
                 result = null;
@@ -145,6 +161,9 @@ public class AssertionFactory {
         switch (type) {
             case THUMBNAIL:
                 result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion);
+                break;
+            case EXIF:
+                result = createJsonContentTypeJumbfBox(type.getLabel(), assertion, metadata);
                 break;
             case CONTENT_BINDING:
             case ACTION:
@@ -212,7 +231,6 @@ public class AssertionFactory {
         }
     }
 
-    @SuppressWarnings("unused")
     private JumbfBox createJsonContentTypeJumbfBox(String label, Assertion assertion, ProvenanceMetadata metadata)
             throws MipamsException {
 

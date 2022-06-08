@@ -2,18 +2,12 @@ package org.mipams.fake_media.services.consumer;
 
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.services.CoreGeneratorService;
-import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.mipams.fake_media.entities.Claim;
-import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.services.ManifestDiscovery;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
 import org.mipams.fake_media.services.content_types.ClaimContentType;
@@ -77,33 +71,5 @@ public class ManifestConsumer {
                                 assertionStoreContentType);
                 assertionStoreConsumer.validateAssertionsIntegrity(manifestId, claim.getAssertionReferenceList(),
                                 assertionStoreJumbfBox);
-        }
-
-        public void verifyManifestUriReference(JumbfBox manifestJumbfBox, UriReference manifestUriReference)
-                        throws MipamsException {
-
-                if (manifestUriReference.getAlgorithm() != UriReference.SUPPORTED_HASH_ALGORITHM) {
-                        throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
-                }
-
-                byte[] computedDigest = getManifestSha256Digest(manifestJumbfBox);
-
-                if (!Arrays.equals(manifestUriReference.getDigest(), computedDigest)) {
-                        throw new MipamsException(
-                                        String.format(ProvenanceErrorMessages.INGREDIENT_REFERENCE_DIGEST_MISMATCH,
-                                                        manifestUriReference.getUri()));
-                }
-
-        }
-
-        public byte[] getManifestSha256Digest(JumbfBox manifestJumbfBox) throws MipamsException {
-                String tempFile = CoreUtils.randomStringGenerator();
-                String tempFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), tempFile);
-                try {
-                        coreGeneratorService.generateJumbfMetadataToFile(List.of(manifestJumbfBox), tempFilePath);
-                        return ProvenanceUtils.computeSha256DigestOfFileContents(tempFilePath);
-                } finally {
-                        CoreUtils.deleteFile(tempFilePath);
-                }
         }
 }

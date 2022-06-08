@@ -25,7 +25,6 @@ import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 import org.mipams.fake_media.services.content_types.ClaimSignatureContentType;
-import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -73,7 +72,7 @@ public class ClaimSignatureProducer {
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.JUMBF_BOX_CREATION_ERROR, e);
         } finally {
-            ProvenanceUtils.deleteFile(claimJumbfFilePath);
+            CoreUtils.deleteFile(claimJumbfFilePath);
         }
     }
 

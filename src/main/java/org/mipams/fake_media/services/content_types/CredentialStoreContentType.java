@@ -27,7 +27,7 @@ public class CredentialStoreContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "mipams.provenance.credentials";
+        return "mpms.provenance.credentials";
     }
 
     @Override

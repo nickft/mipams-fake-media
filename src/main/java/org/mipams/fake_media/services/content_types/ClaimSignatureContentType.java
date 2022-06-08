@@ -26,7 +26,7 @@ public class ClaimSignatureContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
-        return "mipams.provenance.signature";
+        return "mpms.provenance.signature";
     }
 
     @Override

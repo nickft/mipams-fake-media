@@ -36,7 +36,8 @@ public class ProvenanceErrorMessages {
     public static final String CONTENT_BINDING_MISMATCH = "Content Binding Mismatch. Asset digest does not match with the asserted digest.";
     public static final String UNREFERENCED_ASSERTION = "Found an Assertion JUMBF box that is not included in the Claim";
     public static final String ASSERTION_DIGEST_MISMATCH = "Assertion with label %s is corrupted. Expected digest in the Claim does not match with the digest of the assertion in the Assertion Store.";
-    public static final String INGREDIENT_REFERENCE_DIGEST_MISMATCH = "Expected digest in the Ingredient Reference %s does not match with the compute ddigest of the Manifest JUMBF Box";
+    public static final String URI_REFERENCE_LABEL_MISMATCH = "Expected label in the Ingredient Reference %s does not match with the label of JUMBF Box";
+    public static final String URI_REFERENCE_DIGEST_MISMATCH = "Expected digest in the Ingredient Reference %s does not match with the compute digest of the JUMBF Box";
     public static final String REDACTION_PROCESS_MISMATCH = "Mismatch during redaction process. Assertions Expected: [%d] Found [%d]";
     public static final String PARENT_INGREDIENT_NOT_FOUND = "Could not locate Parent Ingredient Reference pointing to %s";
 

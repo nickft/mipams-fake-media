@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -18,7 +19,7 @@ import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.assertions.Assertion;
-
+import org.mipams.fake_media.services.AssertionFactory.MipamsAssertion;
 import org.mipams.fake_media.services.content_types.ProvenanceContentType;
 
 public class ProvenanceUtils {
@@ -53,13 +54,6 @@ public class ProvenanceUtils {
             throw new MipamsException(ProvenanceErrorMessages.CRYPTO_SCHEMA_LOAD_ERROR, e);
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.ASSET_FILE_BINDING_ERROR, e);
-        }
-    }
-
-    public static void deleteFile(String filePath) {
-        File f = new File(filePath);
-        if (f.exists()) {
-            f.delete();
         }
     }
 
@@ -126,6 +120,10 @@ public class ProvenanceUtils {
 
         JumbfBox manifestResult = null;
 
+        if (targetManifestUri == null) {
+            return manifestResult;
+        }
+
         String manifestId;
         JumbfBox manifestJumbfBox;
 
@@ -139,12 +137,28 @@ public class ProvenanceUtils {
 
             String manifestUri = getProvenanceJumbfURL(manifestId);
 
-            if (manifestUri.equals(targetManifestUri)) {
+            if (targetManifestUri.startsWith(manifestUri)) {
                 manifestResult = manifestJumbfBox;
                 break;
             }
         }
 
         return manifestResult;
+    }
+
+    public static boolean containsRedactableAssertionsOnly(List<JumbfBox> assertionList) throws MipamsException {
+
+        boolean result = true;
+        String label;
+        MipamsAssertion type;
+
+        for (JumbfBox assertion : assertionList) {
+            label = assertion.getDescriptionBox().getLabel();
+            type = MipamsAssertion.getTypeFromLabel(label);
+
+            result = result && type.isRedactable();
+        }
+
+        return result;
     }
 }

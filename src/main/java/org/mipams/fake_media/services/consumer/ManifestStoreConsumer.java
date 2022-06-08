@@ -9,6 +9,7 @@ import org.mipams.fake_media.entities.assertions.IngredientAssertion;
 import org.mipams.fake_media.entities.responses.ManifestStoreResponse;
 import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.ManifestDiscovery;
+import org.mipams.fake_media.services.UriReferenceService;
 import org.mipams.fake_media.services.AssertionFactory.MipamsAssertion;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
@@ -28,6 +29,9 @@ public class ManifestStoreConsumer {
 
     @Autowired
     ManifestConsumer manifestConsumer;
+
+    @Autowired
+    UriReferenceService uriReferenceService;
 
     @Autowired
     ManifestDiscovery manifestDiscovery;
@@ -59,7 +63,8 @@ public class ManifestStoreConsumer {
             currentManifestJumbfBox = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
                     currentManifestReference.getUri());
 
-            manifestConsumer.verifyManifestUriReference(currentManifestJumbfBox, currentManifestReference);
+            uriReferenceService.verifyManifestUriReference(currentManifestJumbfBox, currentManifestReference);
+
             manifestConsumer.verifyManifestIntegrity(currentManifestJumbfBox);
 
             manifestStoreResponse.addManifestResponse(currentManifestJumbfBox);
@@ -94,7 +99,8 @@ public class ManifestStoreConsumer {
             JumbfBox parentStandardManifest = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
                     parentUriReference.getUri());
 
-            manifestConsumer.verifyManifestUriReference(parentStandardManifest, parentUriReference);
+            uriReferenceService.verifyManifestUriReference(parentStandardManifest, parentUriReference);
+
             manifestConsumer.verifyManifestIntegrityAndContentBinding(parentStandardManifest, assetUrl);
         }
 
