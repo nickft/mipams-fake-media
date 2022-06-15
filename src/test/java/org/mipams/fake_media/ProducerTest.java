@@ -99,13 +99,13 @@ public class ProducerTest {
         assertion1.setAction("mpms.prov.cropped");
         assertion1.setSoftwareAgent("Adobe Photoshop");
         assertion1.setDate("22/1/22 10:12:32");
-        assertion1.setParameters("blur: 10");
+        // assertion1.setParameters("blur: 10");
 
         ActionAssertion assertion2 = new ActionAssertion();
         assertion2.setAction("mpms.prov.filtered");
         assertion2.setSoftwareAgent("Adobe Photoshop");
         assertion2.setDate("22/1/22 10:15:32");
-        assertion2.setParameters("colourBefore: blue, colourAfter: green");
+        // assertion2.setParameters("colourBefore: blue, colourAfter: green");
 
         ThumbnailAssertion assertion3 = new ThumbnailAssertion();
         assertion3.setFileName("image.jpeg");

@@ -1,6 +1,8 @@
 package org.mipams.fake_media.services;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
@@ -21,15 +23,30 @@ public class RedactionService {
     public JumbfBox redactAssertionsFromJumbfBox(JumbfBox manifestJumbfBox, List<String> redactedAssertionList)
             throws MipamsException {
 
+        JumbfBoxBuilder redactedManifestJumbfBoxBuilder = new JumbfBoxBuilder(manifestJumbfBox);
+
         JumbfBox assertionStoreJumbfBox = ProvenanceUtils.getProvenanceJumbfBox(manifestJumbfBox,
                 assertionStoreContentType);
 
-        JumbfBox redactedManifest = (new JumbfBoxBuilder(manifestJumbfBox)).getResult();
-        JumbfBox redactedAssertionStoreJumbfBox = ProvenanceUtils.getProvenanceJumbfBox(redactedManifest,
-                assertionStoreContentType);
+        redactedManifestJumbfBoxBuilder.removeContentBox(assertionStoreJumbfBox);
 
-        String manifestLabel = redactedManifest.getDescriptionBox().getLabel();
-        String assertionStoreLabel = redactedAssertionStoreJumbfBox.getDescriptionBox().getLabel();
+        JumbfBox redactedAssertionStoreJumbfBox = redactFromAssertionStore(
+                manifestJumbfBox.getDescriptionBox().getLabel(), assertionStoreJumbfBox, redactedAssertionList);
+
+        redactedManifestJumbfBoxBuilder.appendContentBox(redactedAssertionStoreJumbfBox);
+
+        return redactedManifestJumbfBoxBuilder.getResult();
+    }
+
+    private JumbfBox redactFromAssertionStore(String manifestId, JumbfBox assertionStoreJumbfBox,
+            List<String> redactedAssertionReferenceList) throws MipamsException {
+
+        JumbfBoxBuilder redactedAssertionStoreJumbfBoxBuilder = new JumbfBoxBuilder(assertionStoreJumbfBox);
+
+        List<String> filterdReferenceList = filterAssertionListBasedOnManiestUri(manifestId,
+                redactedAssertionReferenceList);
+
+        String assertionStoreLabel = assertionStoreJumbfBox.getDescriptionBox().getLabel();
 
         int redactedAssertionsCounter = 0;
         String uriReference, assertionLabel;
@@ -38,20 +55,29 @@ public class RedactionService {
             JumbfBox assertionJumbfBox = (JumbfBox) contentBox;
             assertionLabel = assertionJumbfBox.getDescriptionBox().getLabel();
 
-            uriReference = ProvenanceUtils.getProvenanceJumbfURL(manifestLabel, assertionStoreLabel, assertionLabel);
+            uriReference = ProvenanceUtils.getProvenanceJumbfURL(manifestId, assertionStoreLabel, assertionLabel);
 
-            if (redactedAssertionList.contains(uriReference)) {
+            if (filterdReferenceList.contains(uriReference)) {
                 redactedAssertionsCounter++;
-                redactedAssertionStoreJumbfBox.getContentBoxList().remove(assertionJumbfBox);
+            } else {
+                redactedAssertionStoreJumbfBoxBuilder.appendContentBox(contentBox);
             }
         }
 
-        if (redactedAssertionsCounter != redactedAssertionList.size()) {
+        if (redactedAssertionsCounter != filterdReferenceList.size()) {
             throw new MipamsException(
-                    getRedactionMismatchMessage(redactedAssertionsCounter, redactedAssertionList.size()));
+                    getRedactionMismatchMessage(redactedAssertionsCounter, filterdReferenceList.size()));
         }
 
-        return redactedManifest;
+        return redactedAssertionStoreJumbfBoxBuilder.getResult();
+    }
+
+    private List<String> filterAssertionListBasedOnManiestUri(String manifestId, List<String> assertionReferenceList) {
+        String manifestUri = ProvenanceUtils.getProvenanceJumbfURL(manifestId);
+
+        List<String> filteredList = new ArrayList<>(assertionReferenceList);
+        return filteredList.stream().filter(uri -> uri.startsWith(manifestUri)).collect(Collectors.toList());
+
     }
 
     private String getRedactionMismatchMessage(int actual, int expected) {
