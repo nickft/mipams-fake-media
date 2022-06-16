@@ -10,8 +10,6 @@ import lombok.ToString;
 public class ActionAssertion implements NonRedactableAssertion {
     private @Getter @Setter String action;
     private @Getter @Setter String date;
-    // private @Getter @Setter String changed;
-    // private @Getter @Setter String parameters;
     private @Getter @Setter String metadata;
     private @Getter @Setter String softwareAgent;
 }

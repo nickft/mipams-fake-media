@@ -190,6 +190,8 @@ public class AssertionFactory {
             result = MipamsAssertion.INGREDIENT;
         } else if (ThumbnailAssertion.class.getName().equals(assertionClass)) {
             result = MipamsAssertion.THUMBNAIL;
+        } else if (ExifMetadataAssertion.class.getName().equals(assertionClass)) {
+            result = MipamsAssertion.EXIF;
         } else {
             throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_ASSERTION);
         }
