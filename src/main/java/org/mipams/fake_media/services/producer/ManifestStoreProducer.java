@@ -9,6 +9,7 @@ import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.entities.responses.ManifestStoreResponse;
 import org.mipams.fake_media.services.UriReferenceService;
+import org.mipams.fake_media.services.consumer.ManifestConsumer;
 import org.mipams.fake_media.services.consumer.ManifestStoreConsumer;
 import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
 import org.mipams.fake_media.utils.ProvenanceUtils;
@@ -35,6 +36,9 @@ public class ManifestStoreProducer {
     ManifestProducer manifestProducer;
 
     @Autowired
+    ManifestConsumer manifestConsumer;
+
+    @Autowired
     UriReferenceService uriReferenceService;
 
     public final JumbfBox createManifestStore(ProducerRequest producerRequest) throws MipamsException {
@@ -48,10 +52,10 @@ public class ManifestStoreProducer {
 
             logger.debug("There is already manifest store in the digital asset");
 
-            ManifestStoreResponse response = manifestStoreConsumer.consumeActiveManifest(currentManifestStoreJumbfBox,
-                    producerRequest.getAssetUrl());
+            JumbfBox manifestJumbfBox = ProvenanceUtils.locateActiveManifest(currentManifestStoreJumbfBox);
+            manifestConsumer.verifyManifestIntegrity(manifestJumbfBox);
 
-            String activeManifestId = response.getManifestResponseMap().keySet().iterator().next();
+            String activeManifestId = manifestJumbfBox.getDescriptionBox().getLabel();
             String activeManifestUri = ProvenanceUtils.getProvenanceJumbfURL(activeManifestId);
 
             logger.debug("Active manifest: " + activeManifestUri);

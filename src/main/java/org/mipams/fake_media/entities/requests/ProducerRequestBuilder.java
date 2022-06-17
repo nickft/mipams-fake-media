@@ -31,12 +31,20 @@ public class ProducerRequestBuilder {
         this.producerRequest.setAssertionList(new ArrayList<>(assertionList));
     }
 
+    public void setCredentialStore(JumbfBox credentialJumbfBox) {
+        this.producerRequest.setCredentialsStoreJumbfBox(credentialJumbfBox);
+    }
+
     public void setRedactedAssertionList(List<String> redactedAssertionUriList) {
         this.producerRequest.setRedactedAssertionUriList(new ArrayList<>(redactedAssertionUriList));
     }
 
-    public void setCredentialStore(JumbfBox credentialJumbfBox) {
-        this.producerRequest.setCredentialsStoreJumbfBox(credentialJumbfBox);
+    public void setManifestStore(JumbfBox manifestStoreJumbfBox) {
+        this.producerRequest.setManifestStoreJumbfBox(manifestStoreJumbfBox);
+    }
+
+    public void setComponentManifestList(List<JumbfBox> componentManifestJumbfBoxList) {
+        this.producerRequest.setComponentManifestJumbfBoxList(new ArrayList<>(componentManifestJumbfBoxList));
     }
 
     public ProducerRequest getResult() {

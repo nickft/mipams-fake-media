@@ -16,6 +16,7 @@ import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JsonBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
+import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.assertions.Assertion;
@@ -28,7 +29,9 @@ public class ProvenanceUtils {
 
     public static String getProvenanceJumbfURL(String manifestId, String... childFieldList) {
 
-        StringBuilder result = new StringBuilder("self#jumbf=mipams/urn:uuid:").append(manifestId.toUpperCase());
+        String[] manifestIdParts = manifestId.split(":");
+        manifestIdParts[2] = manifestIdParts[2].toUpperCase();
+        StringBuilder result = new StringBuilder("self#jumbf=mipams/").append(String.join(":", manifestIdParts));
 
         for (String childField : childFieldList) {
             result.append("/").append(childField);
@@ -160,5 +163,9 @@ public class ProvenanceUtils {
         }
 
         return result;
+    }
+
+    public static String issueNewManifestId() {
+        return "urn:uuid:" + CoreUtils.randomStringGenerator();
     }
 }

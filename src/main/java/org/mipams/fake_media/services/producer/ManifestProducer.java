@@ -9,6 +9,7 @@ import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.ManifestDiscovery;
 import org.mipams.fake_media.services.content_types.ManifestContentType;
+import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class ManifestProducer {
                 JumbfBoxBuilder manifestJumbfBoxBuilder = new JumbfBoxBuilder();
                 manifestJumbfBoxBuilder.setJumbfBoxAsRequestable();
 
-                final String manifestId = CoreUtils.randomStringGenerator();
+                final String manifestId = ProvenanceUtils.issueNewManifestId();
                 manifestJumbfBoxBuilder.setLabel(manifestId);
                 logger.debug(String.format("Issue new manifest Id %s", manifestId));
 

@@ -32,7 +32,7 @@ public class UriReferenceService {
             throw new MipamsException(String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Jumbf Box"));
         }
 
-        if (targetUriReference.getAlgorithm() != UriReference.SUPPORTED_HASH_ALGORITHM) {
+        if (!targetUriReference.getAlgorithm().equals(UriReference.SUPPORTED_HASH_ALGORITHM)) {
             throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
         }
 
