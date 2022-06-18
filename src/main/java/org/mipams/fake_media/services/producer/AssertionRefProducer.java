@@ -13,6 +13,8 @@ import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.jumbf.privacy_security.entities.ProtectionDescriptionBox;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AssertionRefProducer {
+
+    private static final Logger logger = LoggerFactory.getLogger(AssertionRefProducer.class);
 
     @Autowired
     Properties properties;
