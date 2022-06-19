@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClaimConsumer {
-    public Claim desirializeClaimJumbfBox(JumbfBox claimJumbfBox) throws MipamsException {
+    public Claim deserializeClaimJumbfBox(JumbfBox claimJumbfBox) throws MipamsException {
 
         CborBox claimCborBox = (CborBox) claimJumbfBox.getContentBoxList().get(0);
 

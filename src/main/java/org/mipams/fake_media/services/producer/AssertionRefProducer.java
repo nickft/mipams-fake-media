@@ -102,6 +102,9 @@ public class AssertionRefProducer {
 
             List<JumbfBox> boxesToHash = getBoxesToHash(jumbfBox, contentBoxMap);
 
+            logger.info("Boxes to hash");
+            logger.info(boxesToHash.toString());
+
             coreGeneratorService.generateJumbfMetadataToFile(boxesToHash, tempFilePath);
 
             return ProvenanceUtils.computeSha256DigestOfFileContents(tempFilePath);
@@ -113,19 +116,19 @@ public class AssertionRefProducer {
 
     private List<JumbfBox> getBoxesToHash(JumbfBox jumbfBox, Map<String, JumbfBox> contentBoxMap) {
 
-        List<JumbfBox> boxesToHash;
+        List<JumbfBox> boxesToHash = new ArrayList<>();
 
         if (isProtectionContentTypeJumbfBox(jumbfBox)) {
             ProtectionDescriptionBox pdBox = (ProtectionDescriptionBox) jumbfBox.getContentBoxList().get(0);
 
-            boxesToHash = List.of(jumbfBox);
+            boxesToHash.add(jumbfBox);
 
             if (pdBox.getArLabel() != null) {
                 JumbfBox accessRulesJumbfBox = contentBoxMap.get(pdBox.getArLabel());
                 boxesToHash.add(accessRulesJumbfBox);
             }
         } else {
-            boxesToHash = List.of(jumbfBox);
+            boxesToHash.add(jumbfBox);
         }
 
         return boxesToHash;

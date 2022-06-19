@@ -56,7 +56,7 @@ public class ClaimSignatureConsumer {
             jumbfBoxService.writeToJumbfFile(claimJumbfBox, fos);
 
             if (isSignatureValid(claimSignature, claimJumbfFilePath)) {
-                return claimConsumer.desirializeClaimJumbfBox(claimJumbfBox);
+                return claimConsumer.deserializeClaimJumbfBox(claimJumbfBox);
             } else {
                 throw new MipamsException(String.format(ProvenanceErrorMessages.INVALID_SIGNATURE, manifestId));
             }

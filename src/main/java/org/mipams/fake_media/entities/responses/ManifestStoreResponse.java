@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mipams.fake_media.entities.Claim;
 import org.mipams.fake_media.entities.ClaimSignature;
+import org.mipams.fake_media.services.consumer.ClaimConsumer;
 import org.mipams.fake_media.services.consumer.ClaimSignatureConsumer;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
 import org.mipams.fake_media.services.content_types.ClaimContentType;
@@ -35,21 +37,24 @@ public class ManifestStoreResponse {
         List<JumbfBox> assertionJumbfBoxList = getAssertionStoreContent(manifestJumbfBox);
 
         ManifestResponse manifestResponse = new ManifestResponse();
-        manifestResponse.setClaim(claim);
-        manifestResponse.setClaimCertificate(getCertificateFromClaimSignature(claimSignatue));
         manifestResponse.setAssertionJumbfBoxList(assertionJumbfBoxList);
+        manifestResponse.setClaim(getCertificateContent(claim));
+        manifestResponse.setClaimSignature(getCertificateSignatureContent(claimSignatue));
 
         getManifestResponseMap().put(manifestId, manifestResponse);
     }
 
-    private byte[] getCertificateFromClaimSignature(JumbfBox claimSignatureJumbfBox) throws MipamsException {
+    private Claim getCertificateContent(JumbfBox claimJumbfBox) throws MipamsException {
+        ClaimConsumer claimConsumer = new ClaimConsumer();
+        return claimConsumer.deserializeClaimJumbfBox(claimJumbfBox);
+    }
+
+    private ClaimSignature getCertificateSignatureContent(JumbfBox claimSignatureJumbfBox) throws MipamsException {
 
         ClaimSignatureConsumer claimSignatureConsumer = new ClaimSignatureConsumer();
 
-        ClaimSignature claimSignature = claimSignatureConsumer
+        return claimSignatureConsumer
                 .deserializeClaimSignatureJumbfBox(claimSignatureJumbfBox);
-
-        return claimSignature.getCertificate();
     }
 
     private List<JumbfBox> getAssertionStoreContent(JumbfBox manifestJumbfBox) throws MipamsException {

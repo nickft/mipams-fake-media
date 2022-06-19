@@ -24,6 +24,7 @@ import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.assertions.BindingAssertion;
 import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
+import org.mipams.fake_media.services.producer.AssertionRefProducer;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,9 @@ public class AssertionStoreConsumer {
 
     @Autowired
     AssertionFactory assertionFactory;
+
+    @Autowired
+    AssertionRefProducer assertionRefProducer;
 
     @Autowired
     CoreGeneratorService coreGeneratorService;
@@ -112,52 +116,29 @@ public class AssertionStoreConsumer {
     public void validateAssertionsIntegrity(String manifestId, List<UriReference> assertionReferenceList,
             JumbfBox assertionStoreJumbfBox) throws MipamsException {
 
-        Map<String, UriReference> uriToReferenceMap = new HashMap<>();
+        List<UriReference> computedUriReferenceList = assertionRefProducer
+                .getAssertionReferenceListFromAssertionStore(manifestId, assertionStoreJumbfBox);
 
+        Map<String, UriReference> uriToReferenceMap = new HashMap<>();
         assertionReferenceList.forEach(assertionRef -> uriToReferenceMap.put(assertionRef.getUri(), assertionRef));
 
-        final String assertionStoreLabel = assertionStoreJumbfBox.getDescriptionBox().getLabel();
+        for (UriReference computedUriReference : computedUriReferenceList) {
 
-        for (BmffBox contentBox : assertionStoreJumbfBox.getContentBoxList()) {
-            JumbfBox assertionJumbfBox = (JumbfBox) contentBox;
+            UriReference claimedUriReference = uriToReferenceMap.get(computedUriReference.getUri());
 
-            verifyAssertionIntegrity(manifestId, assertionStoreLabel, assertionJumbfBox, uriToReferenceMap);
-        }
-    }
-
-    private void verifyAssertionIntegrity(String manifestId, String assertionStoreLabel, JumbfBox assertionJumbfBox,
-            Map<String, UriReference> uriToReferenceMap) throws MipamsException {
-
-        String uri;
-        UriReference assertionRef;
-        String label = assertionJumbfBox.getDescriptionBox().getLabel();
-
-        uri = ProvenanceUtils.getProvenanceJumbfURL(manifestId, assertionStoreLabel, label);
-
-        assertionRef = uriToReferenceMap.get(uri);
-
-        if (assertionRef == null) {
-            throw new MipamsException(ProvenanceErrorMessages.UNREFERENCED_ASSERTION);
-        }
-
-        if (!assertionRef.getAlgorithm().equals("SHA-256")) {
-            throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
-        }
-
-        String tempFile = CoreUtils.randomStringGenerator();
-        String tempFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), tempFile);
-        try {
-
-            coreGeneratorService.generateJumbfMetadataToFile(List.of(assertionJumbfBox), tempFilePath);
-
-            byte[] computedDigest = ProvenanceUtils.computeSha256DigestOfFileContents(tempFilePath);
-
-            if (!Arrays.equals(assertionRef.getDigest(), computedDigest)) {
-                throw new MipamsException(String.format(ProvenanceErrorMessages.ASSERTION_DIGEST_MISMATCH, label));
+            if (claimedUriReference == null) {
+                throw new MipamsException(ProvenanceErrorMessages.UNREFERENCED_ASSERTION);
             }
-        } finally {
-            CoreUtils.deleteFile(tempFilePath);
+
+            if (!claimedUriReference.getAlgorithm().equals(computedUriReference.getAlgorithm())) {
+                throw new MipamsException(String.format(ProvenanceErrorMessages.ASSERTION_DIGEST_MISMATCH,
+                        computedUriReference.getUri()));
+            }
+
+            if (!Arrays.equals(computedUriReference.getDigest(), claimedUriReference.getDigest())) {
+                throw new MipamsException(String.format(ProvenanceErrorMessages.ASSERTION_DIGEST_MISMATCH,
+                        computedUriReference.getUri()));
+            }
         }
     }
-
 }
