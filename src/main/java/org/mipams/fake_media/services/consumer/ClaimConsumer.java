@@ -1,6 +1,6 @@
 package org.mipams.fake_media.services.consumer;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,11 +19,9 @@ public class ClaimConsumer {
 
         CborBox claimCborBox = (CborBox) claimJumbfBox.getContentBoxList().get(0);
 
-        String cborFilePath = claimCborBox.getFileUrl();
-
         ObjectMapper mapper = new CBORMapper();
         try {
-            return mapper.readValue(new File(cborFilePath), Claim.class);
+            return mapper.readValue(new ByteArrayInputStream(claimCborBox.getContent()), Claim.class);
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.CBOR_DESERIALIZE_ERROR, e);
         }

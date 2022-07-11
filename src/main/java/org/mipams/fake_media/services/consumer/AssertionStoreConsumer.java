@@ -1,6 +1,6 @@
 package org.mipams.fake_media.services.consumer;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,7 +16,6 @@ import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.services.CoreGeneratorService;
-import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
@@ -101,13 +100,12 @@ public class AssertionStoreConsumer {
 
     private BindingAssertion deserializeBindingAssertion(JumbfBox contentBindingAssertionJumbfBox)
             throws MipamsException {
+
         CborBox contentBindingCborBox = (CborBox) contentBindingAssertionJumbfBox.getContentBoxList().get(0);
-
-        String cborFilePath = contentBindingCborBox.getFileUrl();
-
         ObjectMapper mapper = new CBORMapper();
         try {
-            return mapper.readValue(new File(cborFilePath), BindingAssertion.class);
+            return mapper.readValue(new ByteArrayInputStream(contentBindingCborBox.getContent()),
+                    BindingAssertion.class);
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.CBOR_DESERIALIZE_ERROR, e);
         }

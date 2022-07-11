@@ -2,7 +2,6 @@ package org.mipams.fake_media.services.producer;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 import java.security.cert.CertificateEncodingException;
 
@@ -101,33 +100,23 @@ public class ClaimSignatureProducer {
         ObjectMapper mapper = new CBORMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
-        String claimSignatureFileName = CoreUtils.randomStringGenerator();
-        String claimSignatureFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(),
-                claimSignatureFileName);
-
-        try (OutputStream os = new FileOutputStream(claimSignatureFilePath)) {
+        try {
             byte[] cborData = mapper.writeValueAsBytes(claimSignature);
 
-            CoreUtils.writeByteArrayToOutputStream(cborData, os);
-
-            JumbfBoxBuilder builder = new JumbfBoxBuilder();
+            CborBox cborBox = new CborBox();
+            cborBox.setContent(cborData);
 
             ClaimSignatureContentType service = new ClaimSignatureContentType();
-            builder.setContentType(service);
+            JumbfBoxBuilder builder = new JumbfBoxBuilder(service);
+
             builder.setJumbfBoxAsRequestable();
             builder.setLabel(service.getLabel());
-
-            CborBox cborBox = new CborBox();
-            cborBox.setFileUrl(claimSignatureFilePath);
             builder.appendContentBox(cborBox);
 
             return builder.getResult();
         } catch (JsonProcessingException e) {
             throw new MipamsException(
                     String.format(ProvenanceErrorMessages.SERIALIZATION_ERROR, "Claim Signature", "CBOR"), e);
-        } catch (IOException e) {
-            throw new MipamsException(
-                    String.format(ProvenanceErrorMessages.SERIALIZATION_ERROR, "Claim Signature", "CBOR JUMBF box"), e);
         }
     }
 

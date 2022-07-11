@@ -38,7 +38,11 @@ public class ManifestProducer {
 
         public final JumbfBox produceManifestJumbfBox(ProducerRequest producerRequest) throws MipamsException {
 
-                JumbfBoxBuilder manifestJumbfBoxBuilder = new JumbfBoxBuilder();
+                ManifestContentType manifestContentType = manifestDiscovery
+                                .discoverManifestType(producerRequest.getAssertionList());
+
+                JumbfBoxBuilder manifestJumbfBoxBuilder = new JumbfBoxBuilder(manifestContentType);
+
                 manifestJumbfBoxBuilder.setJumbfBoxAsRequestable();
 
                 final String manifestId = ProvenanceUtils.issueNewManifestId();
@@ -50,10 +54,6 @@ public class ManifestProducer {
 
                 ProvenanceMetadata manifestMetadata = new ProvenanceMetadata();
                 manifestMetadata.setParentDirectory(manifestDirectory);
-
-                ManifestContentType manifestContentType = manifestDiscovery
-                                .discoverManifestType(producerRequest.getAssertionList());
-                manifestJumbfBoxBuilder.setContentType(manifestContentType);
 
                 JumbfBox assertionStoreJumbfBox = generateAssertionStoreJumbfBox(manifestContentType, producerRequest,
                                 manifestMetadata);

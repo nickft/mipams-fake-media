@@ -116,10 +116,8 @@ public class ManifestStoreProducer {
     }
 
     private JumbfBoxBuilder createEmptyManifestStoreJumbfBoxBuilder() throws MipamsException {
-        JumbfBoxBuilder builder = new JumbfBoxBuilder();
-
+        JumbfBoxBuilder builder = new JumbfBoxBuilder(manifestStoreContentType);
         builder.setJumbfBoxAsRequestable();
-        builder.setContentType(manifestStoreContentType);
         builder.setLabel(manifestStoreContentType.getLabel());
 
         return builder;

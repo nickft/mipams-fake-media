@@ -1,5 +1,6 @@
 package org.mipams.fake_media.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -69,11 +70,9 @@ public class ProvenanceUtils {
 
         CborBox assertionCborBox = (CborBox) assertionJumbfBox.getContentBoxList().get(0);
 
-        String cborFilePath = assertionCborBox.getFileUrl();
-
         ObjectMapper mapper = new CBORMapper();
         try {
-            return mapper.readValue(new File(cborFilePath), assertionClass);
+            return mapper.readValue(new ByteArrayInputStream(assertionCborBox.getContent()), assertionClass);
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.CBOR_DESERIALIZE_ERROR, e);
         }
@@ -85,11 +84,9 @@ public class ProvenanceUtils {
 
         JsonBox assertionJsonBox = (JsonBox) assertionJumbfBox.getContentBoxList().get(0);
 
-        String jsonFilePath = assertionJsonBox.getFileUrl();
-
         ObjectMapper mapper = new JsonMapper();
         try {
-            return mapper.readValue(new File(jsonFilePath), assertionClass);
+            return mapper.readValue(new ByteArrayInputStream(assertionJsonBox.getContent()), assertionClass);
         } catch (IOException e) {
             throw new MipamsException(ProvenanceErrorMessages.JSON_DESERIALIZE_ERROR, e);
         }

@@ -1,8 +1,5 @@
 package org.mipams.fake_media.services.producer;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +10,6 @@ import javax.xml.bind.DatatypeConverter;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
-import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.crypto.entities.CryptoException;
 import org.mipams.jumbf.crypto.services.CryptoService;
@@ -58,12 +54,10 @@ public class AssertionStoreProducer {
         List<JumbfBox> assertionJumbfBoxList = addRandomnessToAssertions(deterministicAssertionJumbfBoxList,
                 provenanceMetadata);
 
-        JumbfBoxBuilder assertionStoreBuilder = new JumbfBoxBuilder();
-
         AssertionStoreContentType contentType = new AssertionStoreContentType();
 
+        JumbfBoxBuilder assertionStoreBuilder = new JumbfBoxBuilder(contentType);
         assertionStoreBuilder.setJumbfBoxAsRequestable();
-        assertionStoreBuilder.setContentType(contentType);
         assertionStoreBuilder.setLabel(contentType.getLabel());
 
         assertionJumbfBoxList.stream()
@@ -136,7 +130,6 @@ public class AssertionStoreProducer {
             ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
         int numOfRandomBytes = 32;
-        String randomFileUrl, randomFileName;
 
         List<JumbfBox> resultAssertionJumbfBoxList = new ArrayList<>();
         JumbfBoxBuilder builder;
@@ -145,19 +138,11 @@ public class AssertionStoreProducer {
             try {
                 byte[] randomBytes = cryptoService.getRandomNumber(numOfRandomBytes);
 
-                try (InputStream is = new ByteArrayInputStream(randomBytes);) {
+                builder = new JumbfBoxBuilder(jumbfBox);
+                builder.setPrivateField(randomBytes);
 
-                    randomFileName = CoreUtils.randomStringGenerator();
-                    randomFileUrl = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), randomFileName);
-                    CoreUtils.writeBytesFromInputStreamToFile(is, numOfRandomBytes, randomFileUrl);
-
-                    builder = new JumbfBoxBuilder(jumbfBox);
-                    builder.setPrivateField(randomFileUrl);
-
-                    resultAssertionJumbfBoxList.add(builder.getResult());
-                }
-
-            } catch (CryptoException | IOException e) {
+                resultAssertionJumbfBoxList.add(builder.getResult());
+            } catch (CryptoException e) {
                 throw new MipamsException(e);
             }
         }

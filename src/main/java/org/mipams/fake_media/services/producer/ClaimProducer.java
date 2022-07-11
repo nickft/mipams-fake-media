@@ -1,9 +1,5 @@
 package org.mipams.fake_media.services.producer;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +10,6 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
-import org.mipams.jumbf.core.util.CoreUtils;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.crypto.services.CryptoService;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
@@ -90,31 +85,22 @@ public class ClaimProducer {
     private JumbfBox convertClaimToJumbfBox(Claim claim, ProvenanceMetadata provenanceMetadata) throws MipamsException {
         ObjectMapper mapper = new CBORMapper();
 
-        String claimFileName = CoreUtils.randomStringGenerator();
-        String claimFilePath = CoreUtils.getFullPath(provenanceMetadata.getParentDirectory(), claimFileName);
-
-        try (OutputStream os = new FileOutputStream(claimFilePath)) {
+        try {
             byte[] cborData = mapper.writeValueAsBytes(claim);
 
-            CoreUtils.writeByteArrayToOutputStream(cborData, os);
-
-            JumbfBoxBuilder builder = new JumbfBoxBuilder();
+            CborBox cborBox = new CborBox();
+            cborBox.setContent(cborData);
 
             ClaimContentType service = new ClaimContentType();
-            builder.setContentType(service);
+            JumbfBoxBuilder builder = new JumbfBoxBuilder(service);
+
             builder.setJumbfBoxAsRequestable();
             builder.setLabel(service.getLabel());
-
-            CborBox cborBox = new CborBox();
-            cborBox.setFileUrl(claimFilePath);
             builder.appendContentBox(cborBox);
 
             return builder.getResult();
         } catch (JsonProcessingException e) {
             throw new MipamsException(String.format(ProvenanceErrorMessages.SERIALIZATION_ERROR, "Claim", "CBOR"), e);
-        } catch (IOException e) {
-            throw new MipamsException(
-                    String.format(ProvenanceErrorMessages.CONVERTION_ERROR, "Claim", "CBOR JUMBF box"), e);
         }
     }
 }

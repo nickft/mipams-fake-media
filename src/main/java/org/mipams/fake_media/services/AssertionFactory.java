@@ -160,7 +160,7 @@ public class AssertionFactory {
 
         switch (type) {
             case THUMBNAIL:
-                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion);
+                result = createThumbnailAssertionJumbfBox(type.getLabel(), (ThumbnailAssertion) assertion, metadata);
                 break;
             case EXIF:
                 result = createJsonContentTypeJumbfBox(type.getLabel(), assertion, metadata);
@@ -205,31 +205,20 @@ public class AssertionFactory {
         ObjectMapper mapper = new CBORMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
-        String assertionFileName = CoreUtils.randomStringGenerator();
-        String assertionFilePath = CoreUtils.getFullPath(metadata.getParentDirectory(), assertionFileName);
-
-        try (OutputStream os = new FileOutputStream(assertionFilePath)) {
+        try {
             byte[] cborData = mapper.writeValueAsBytes(assertion);
+            CborBox cborBox = new CborBox();
+            cborBox.setContent(cborData);
 
-            CoreUtils.writeByteArrayToOutputStream(cborData, os);
-
-            JumbfBoxBuilder builder = new JumbfBoxBuilder();
-
-            builder.setContentType(cborContentType);
+            JumbfBoxBuilder builder = new JumbfBoxBuilder(cborContentType);
             builder.setJumbfBoxAsRequestable();
             builder.setLabel(label);
-
-            CborBox cborBox = new CborBox();
-            cborBox.setFileUrl(assertionFilePath);
             builder.appendContentBox(cborBox);
 
             return builder.getResult();
         } catch (JsonProcessingException e) {
             throw new MipamsException(String.format(ProvenanceErrorMessages.SERIALIZATION_ERROR, "Assertion", "CBOR"),
                     e);
-        } catch (IOException e) {
-            throw new MipamsException(
-                    String.format(ProvenanceErrorMessages.CONVERTION_ERROR, "Assertion", "Claim JUMBF box"), e);
         }
     }
 
@@ -239,46 +228,28 @@ public class AssertionFactory {
         ObjectMapper mapper = new JsonMapper();
         mapper.setSerializationInclusion(Include.NON_NULL);
 
-        String assertionFileName = CoreUtils.randomStringGenerator();
-        String assertionFilePath = CoreUtils.getFullPath(metadata.getParentDirectory(), assertionFileName);
-
-        try (OutputStream os = new FileOutputStream(assertionFilePath)) {
+        try {
             byte[] jsonData = mapper.writeValueAsBytes(assertion);
+            JsonBox jsonBox = new JsonBox();
+            jsonBox.setContent(jsonData);
 
-            CoreUtils.writeByteArrayToOutputStream(jsonData, os);
-
-            JumbfBoxBuilder builder = new JumbfBoxBuilder();
-
-            builder.setContentType(jsonContentType);
+            JumbfBoxBuilder builder = new JumbfBoxBuilder(jsonContentType);
             builder.setJumbfBoxAsRequestable();
             builder.setLabel(label);
-
-            JsonBox jsonBox = new JsonBox();
-            jsonBox.setFileUrl(assertionFilePath);
             builder.appendContentBox(jsonBox);
 
             return builder.getResult();
         } catch (JsonProcessingException e) {
             throw new MipamsException(String.format(ProvenanceErrorMessages.CONVERTION_ERROR, "Assertion", "JSON"), e);
-        } catch (IOException e) {
-            throw new MipamsException(
-                    String.format(ProvenanceErrorMessages.CONVERTION_ERROR, "Assertion", "JSON JUMBF box"), e);
         }
     }
 
-    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion)
-            throws MipamsException {
+    private JumbfBox createThumbnailAssertionJumbfBox(String label, ThumbnailAssertion assertion,
+            ProvenanceMetadata metadata) throws MipamsException {
 
-        String assertionFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), assertion.getFileName());
-
-        JumbfBoxBuilder builder = new JumbfBoxBuilder();
-
-        builder.setContentType(embeddedFileContentType);
-        builder.setJumbfBoxAsRequestable();
-        builder.setLabel(label);
+        String assertionFilePath = CoreUtils.getFullPath(metadata.getParentDirectory(), assertion.getFileName());
 
         EmbeddedFileDescriptionBox edbox = new EmbeddedFileDescriptionBox();
-
         edbox.setFileName(assertion.getFileName());
         edbox.setMediaTypeFromString(assertion.getMediaType());
 
@@ -286,6 +257,9 @@ public class AssertionFactory {
         bdBox.setReferencedExternally(false);
         bdBox.setFileUrl(assertionFilePath);
 
+        JumbfBoxBuilder builder = new JumbfBoxBuilder(embeddedFileContentType);
+        builder.setJumbfBoxAsRequestable();
+        builder.setLabel(label);
         builder.appendContentBox(edbox);
         builder.appendContentBox(bdBox);
 

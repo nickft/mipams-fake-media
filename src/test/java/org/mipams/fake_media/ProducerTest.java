@@ -10,7 +10,6 @@ import org.mipams.fake_media.entities.ProvenanceMetadata;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 import org.mipams.fake_media.entities.assertions.ActionAssertion;
 import org.mipams.fake_media.entities.assertions.Assertion;
-import org.mipams.fake_media.entities.assertions.ThumbnailAssertion;
 import org.mipams.fake_media.entities.requests.ProducerRequestBuilder;
 import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.consumer.ManifestConsumer;
@@ -107,11 +106,7 @@ public class ProducerTest {
         assertion2.setDate("22/1/22 10:15:32");
         // assertion2.setParameters("colourBefore: blue, colourAfter: green");
 
-        ThumbnailAssertion assertion3 = new ThumbnailAssertion();
-        assertion3.setFileName("image.jpeg");
-        assertion3.setMediaType("application/jpeg");
-
-        List<Assertion> assertionList = List.of(assertion1, assertion2, assertion3);
+        List<Assertion> assertionList = List.of(assertion1, assertion2);
 
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
         ProducerRequestBuilder builder = new ProducerRequestBuilder(assetFileUrl);
@@ -137,10 +132,9 @@ public class ProducerTest {
         JumbfBox manifestJumbfBox = producer.produceManifestJumbfBox(builder.getResult());
         String outputFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), PROVENANCE_FILE_NAME);
 
-        JumbfBoxBuilder manifestStoreBuilder = new JumbfBoxBuilder();
-
         ManifestStoreContentType service = new ManifestStoreContentType();
-        manifestStoreBuilder.setContentType(service);
+        JumbfBoxBuilder manifestStoreBuilder = new JumbfBoxBuilder(service);
+
         manifestStoreBuilder.setJumbfBoxAsRequestable();
         manifestStoreBuilder.setLabel(service.getLabel());
         manifestStoreBuilder.appendContentBox(manifestJumbfBox);

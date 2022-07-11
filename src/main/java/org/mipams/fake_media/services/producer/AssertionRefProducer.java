@@ -102,7 +102,7 @@ public class AssertionRefProducer {
 
             List<JumbfBox> boxesToHash = getBoxesToHash(jumbfBox, contentBoxMap);
 
-            logger.info("Boxes to hash");
+            logger.info("Boxes to hash length: " + boxesToHash.size());
             logger.info(boxesToHash.toString());
 
             coreGeneratorService.generateJumbfMetadataToFile(boxesToHash, tempFilePath);
@@ -114,7 +114,8 @@ public class AssertionRefProducer {
         }
     }
 
-    private List<JumbfBox> getBoxesToHash(JumbfBox jumbfBox, Map<String, JumbfBox> contentBoxMap) {
+    private List<JumbfBox> getBoxesToHash(JumbfBox jumbfBox, Map<String, JumbfBox> contentBoxMap)
+            throws MipamsException {
 
         List<JumbfBox> boxesToHash = new ArrayList<>();
 
@@ -125,6 +126,12 @@ public class AssertionRefProducer {
 
             if (pdBox.getArLabel() != null) {
                 JumbfBox accessRulesJumbfBox = contentBoxMap.get(pdBox.getArLabel());
+
+                if (accessRulesJumbfBox == null) {
+                    throw new MipamsException(
+                            "Could not find access rules JUMBF box with label: " + pdBox.getArLabel());
+                }
+
                 boxesToHash.add(accessRulesJumbfBox);
             }
         } else {
