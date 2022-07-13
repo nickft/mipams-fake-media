@@ -7,7 +7,6 @@ import java.util.Map;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.UriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
-import org.mipams.fake_media.entities.responses.ManifestStoreResponse;
 import org.mipams.fake_media.services.UriReferenceService;
 import org.mipams.fake_media.services.consumer.ManifestConsumer;
 import org.mipams.fake_media.services.consumer.ManifestStoreConsumer;
