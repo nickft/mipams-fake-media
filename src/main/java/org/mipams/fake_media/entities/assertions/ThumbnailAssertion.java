@@ -1,13 +1,22 @@
 package org.mipams.fake_media.entities.assertions;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
-@NoArgsConstructor
-@ToString
 public class ThumbnailAssertion implements NonRedactableAssertion {
-    private @Getter @Setter String fileName;
-    private @Getter @Setter String mediaType;
+    private String fileName;
+    private String mediaType;
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
 }

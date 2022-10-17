@@ -16,6 +16,7 @@ import org.mipams.fake_media.services.consumer.ManifestConsumer;
 import org.mipams.fake_media.services.content_types.ManifestStoreContentType;
 import org.mipams.fake_media.services.producer.ManifestProducer;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.core.entities.ParseMetadata;
 import org.mipams.jumbf.core.services.CoreGeneratorService;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -69,6 +71,7 @@ public class ProducerTest {
     AssertionFactory assertionFactory;
 
     @Test
+    @Order(1)
     void testManifestProduction() throws Exception {
         Certificate cert = null;
         try (FileInputStream fis = new FileInputStream(
@@ -148,6 +151,7 @@ public class ProducerTest {
     }
 
     @Test
+    @Order(2)
     void testManifestConsumption() throws Exception {
         String inputFilePath = CoreUtils.getFullPath(properties.getFileDirectory(), PROVENANCE_FILE_NAME);
 
@@ -158,7 +162,7 @@ public class ProducerTest {
         ParseMetadata parseMetadata = new ParseMetadata();
         parseMetadata.setParentDirectory(manifestDirectory);
 
-        try (InputStream input = new FileInputStream(inputFilePath)) {
+        try (InputStream input = new BufferedInputStream(new FileInputStream(inputFilePath), 8)) {
             manifestStoreJumbfBox = jumbfBoxService.parseFromJumbfFile(input, parseMetadata);
         }
 

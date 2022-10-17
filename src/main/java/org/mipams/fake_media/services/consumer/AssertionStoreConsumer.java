@@ -19,7 +19,7 @@ import org.mipams.jumbf.core.services.CoreGeneratorService;
 import org.mipams.jumbf.core.util.MipamsException;
 import org.mipams.jumbf.core.util.Properties;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.entities.assertions.BindingAssertion;
 import org.mipams.fake_media.services.AssertionFactory;
 import org.mipams.fake_media.services.content_types.AssertionStoreContentType;
@@ -111,18 +111,18 @@ public class AssertionStoreConsumer {
         }
     }
 
-    public void validateAssertionsIntegrity(String manifestId, List<UriReference> assertionReferenceList,
+    public void validateAssertionsIntegrity(String manifestId, List<HashedUriReference> assertionReferenceList,
             JumbfBox assertionStoreJumbfBox) throws MipamsException {
 
-        List<UriReference> computedUriReferenceList = assertionRefProducer
+        List<HashedUriReference> computedUriReferenceList = assertionRefProducer
                 .getAssertionReferenceListFromAssertionStore(manifestId, assertionStoreJumbfBox);
 
-        Map<String, UriReference> uriToReferenceMap = new HashMap<>();
+        Map<String, HashedUriReference> uriToReferenceMap = new HashMap<>();
         assertionReferenceList.forEach(assertionRef -> uriToReferenceMap.put(assertionRef.getUri(), assertionRef));
 
-        for (UriReference computedUriReference : computedUriReferenceList) {
+        for (HashedUriReference computedUriReference : computedUriReferenceList) {
 
-            UriReference claimedUriReference = uriToReferenceMap.get(computedUriReference.getUri());
+            HashedUriReference claimedUriReference = uriToReferenceMap.get(computedUriReference.getUri());
 
             if (claimedUriReference == null) {
                 throw new MipamsException(ProvenanceErrorMessages.UNREFERENCED_ASSERTION);

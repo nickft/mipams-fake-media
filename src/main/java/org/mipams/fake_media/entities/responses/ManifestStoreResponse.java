@@ -17,10 +17,8 @@ import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.util.MipamsException;
 
-import lombok.Getter;
-
 public class ManifestStoreResponse {
-    private @Getter Map<String, ManifestResponse> manifestResponseMap;
+    private Map<String, ManifestResponse> manifestResponseMap;
 
     public ManifestStoreResponse() {
         this.manifestResponseMap = new HashMap<>();
@@ -68,4 +66,9 @@ public class ManifestStoreResponse {
         }
         return result;
     }
+
+    public Map<String, ManifestResponse> getManifestResponseMap() {
+        return manifestResponseMap;
+    };
+
 }

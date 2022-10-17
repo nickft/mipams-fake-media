@@ -17,7 +17,7 @@ import org.mipams.fake_media.entities.Claim;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
 import org.mipams.fake_media.entities.ProvenanceMetadata;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.content_types.ClaimContentType;
 import org.mipams.fake_media.services.content_types.ClaimSignatureContentType;
@@ -43,7 +43,7 @@ public class ClaimProducer {
     public JumbfBox produce(String manifestId, ProducerRequest producerRequest, JumbfBox assertionStore,
             ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
-        List<UriReference> assertionHashedUriList = assertionRefProducer
+        List<HashedUriReference> assertionHashedUriList = assertionRefProducer
                 .getAssertionReferenceListFromAssertionStore(manifestId, assertionStore);
 
         List<String> encryptedJumbfBoxUriList = getEncryptedAssertionUriList(manifestId, assertionStore);

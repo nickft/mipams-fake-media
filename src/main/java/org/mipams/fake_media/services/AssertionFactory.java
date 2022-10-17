@@ -1,9 +1,5 @@
 package org.mipams.fake_media.services;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,8 +30,6 @@ import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import lombok.Getter;
-
 @Service
 public class AssertionFactory {
 
@@ -47,8 +41,8 @@ public class AssertionFactory {
         THUMBNAIL("mp.thumbnail", false),
         EXIF("stds.exif", true);
 
-        private @Getter String label;
-        private @Getter boolean redactable;
+        private String label;
+        private boolean redactable;
 
         MipamsAssertion(String field, boolean redactable) {
             this.label = field;
@@ -71,6 +65,14 @@ public class AssertionFactory {
             }
 
             return result;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public boolean isRedactable() {
+            return redactable;
         }
 
     }

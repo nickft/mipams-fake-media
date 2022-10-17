@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.entities.requests.ProducerRequest;
 import org.mipams.fake_media.services.UriReferenceService;
 import org.mipams.fake_media.services.consumer.ManifestConsumer;
@@ -97,7 +97,7 @@ public class ManifestStoreProducer {
 
         final String targetUriReference = ProvenanceUtils.getProvenanceJumbfURL(manifestId);
 
-        UriReference manifestReference = null;
+        HashedUriReference manifestReference = null;
 
         for (JumbfBox assertionJumbfBox : assertionJumbfBoxList) {
             manifestReference = manifestStoreConsumer
@@ -125,17 +125,17 @@ public class ManifestStoreProducer {
     private void validateComponentIngredientReferenceDigests(JumbfBox manifestJumbfBox,
             List<JumbfBox> componentManifestJumbfBoxList) throws MipamsException {
 
-        List<UriReference> ingredientRefList = manifestStoreConsumer
+        List<HashedUriReference> ingredientRefList = manifestStoreConsumer
                 .getIngredientManifestIdReferenceList(manifestJumbfBox);
 
-        Map<String, UriReference> uriToReferenceMap = new HashMap<>();
+        Map<String, HashedUriReference> uriToReferenceMap = new HashMap<>();
 
-        for (UriReference uriReference : ingredientRefList) {
+        for (HashedUriReference uriReference : ingredientRefList) {
             uriToReferenceMap.put(uriReference.getUri(), uriReference);
         }
 
         String ingredientManifestId, ingredientManifestUri;
-        UriReference ingredientReference;
+        HashedUriReference ingredientReference;
         for (JumbfBox ingredientManifest : componentManifestJumbfBoxList) {
 
             ingredientManifestId = ingredientManifest.getDescriptionBox().getLabel();

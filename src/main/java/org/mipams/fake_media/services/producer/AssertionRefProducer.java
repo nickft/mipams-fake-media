@@ -15,7 +15,7 @@ import org.mipams.jumbf.privacy_security.entities.ProtectionDescriptionBox;
 import org.mipams.jumbf.privacy_security.services.content_types.ProtectionContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,10 +34,11 @@ public class AssertionRefProducer {
     @Autowired
     CoreGeneratorService coreGeneratorService;
 
-    public List<UriReference> getAssertionReferenceListFromAssertionStore(String manifestId, JumbfBox assertionStore)
+    public List<HashedUriReference> getAssertionReferenceListFromAssertionStore(String manifestId,
+            JumbfBox assertionStore)
             throws MipamsException {
 
-        List<UriReference> result = new ArrayList<>();
+        List<HashedUriReference> result = new ArrayList<>();
 
         List<String> accessRulesJumbfBoxLabelList = getAccessRulesBoxLabelList(assertionStore);
         Map<String, JumbfBox> contentBoxMap = initializeContentBoxMap(assertionStore);
@@ -52,7 +53,7 @@ public class AssertionRefProducer {
 
             byte[] digest = calculateDigestForJumbfBox(jumbfBox, contentBoxMap);
             String uri = computeUriForAssertion(manifestId, assertionStore, jumbfBox);
-            UriReference ref = new UriReference(digest, uri, UriReference.SUPPORTED_HASH_ALGORITHM);
+            HashedUriReference ref = new HashedUriReference(digest, uri, HashedUriReference.SUPPORTED_HASH_ALGORITHM);
             result.add(ref);
         }
         return result;

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.utils.ProvenanceUtils;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.services.CoreGeneratorService;
@@ -23,7 +23,7 @@ public class UriReferenceService {
     @Autowired
     CoreGeneratorService coreGeneratorService;
 
-    public void verifyManifestUriReference(JumbfBox jumbfBox, UriReference targetUriReference)
+    public void verifyManifestUriReference(JumbfBox jumbfBox, HashedUriReference targetUriReference)
             throws MipamsException {
 
         String label = jumbfBox.getDescriptionBox().getLabel();
@@ -32,7 +32,7 @@ public class UriReferenceService {
             throw new MipamsException(String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Jumbf Box"));
         }
 
-        if (!targetUriReference.getAlgorithm().equals(UriReference.SUPPORTED_HASH_ALGORITHM)) {
+        if (!targetUriReference.getAlgorithm().equals(HashedUriReference.SUPPORTED_HASH_ALGORITHM)) {
             throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
         }
 

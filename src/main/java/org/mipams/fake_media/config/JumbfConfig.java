@@ -1,5 +1,6 @@
 package org.mipams.fake_media.config;
 
+import org.mipams.jumbf.core.BmffBoxServiceDiscoveryManager;
 import org.mipams.jumbf.core.ContentTypeDiscoveryManager;
 import org.mipams.jumbf.core.services.CoreGeneratorService;
 import org.mipams.jumbf.core.services.CoreParserService;
@@ -11,6 +12,7 @@ import org.mipams.jumbf.core.services.boxes.EmbeddedFileDescriptionBoxService;
 import org.mipams.jumbf.core.services.boxes.JsonBoxService;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
 import org.mipams.jumbf.core.services.boxes.PaddingBoxService;
+import org.mipams.jumbf.core.services.boxes.PrivateBoxService;
 import org.mipams.jumbf.core.services.boxes.UuidBoxService;
 import org.mipams.jumbf.core.services.boxes.XmlBoxService;
 import org.mipams.jumbf.core.services.content_types.CborContentType;
@@ -125,6 +127,16 @@ public class JumbfConfig {
     @Bean
     public PaddingBoxService paddingBoxService() {
         return new PaddingBoxService();
+    }
+
+    @Bean
+    public PrivateBoxService privateBoxService() {
+        return new PrivateBoxService();
+    }
+
+    @Bean
+    public BmffBoxServiceDiscoveryManager bmffBoxServiceDiscoveryManager() {
+        return new BmffBoxServiceDiscoveryManager();
     }
 
 }

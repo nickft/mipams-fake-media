@@ -7,6 +7,8 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.mipams.jumbf.core.entities.BinaryDataBox;
+import org.mipams.jumbf.core.entities.JsonBox;
 import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.jumbf.core.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.core.services.boxes.JumbfBoxService;
@@ -51,7 +53,7 @@ public class AssertionStoreProducer {
 
         ensureLabelUniquenessInAssertionStore(deterministicAssertionJumbfBoxList);
 
-        List<JumbfBox> assertionJumbfBoxList = addRandomnessToAssertions(deterministicAssertionJumbfBoxList,
+        List<JumbfBox> assertionJumbfBoxList = addEntropyToAssertions(deterministicAssertionJumbfBoxList,
                 provenanceMetadata);
 
         AssertionStoreContentType contentType = new AssertionStoreContentType();
@@ -126,20 +128,24 @@ public class AssertionStoreProducer {
         }
     }
 
-    private List<JumbfBox> addRandomnessToAssertions(List<JumbfBox> assertionJumbfBoxList,
+    private List<JumbfBox> addEntropyToAssertions(List<JumbfBox> assertionJumbfBoxList,
             ProvenanceMetadata provenanceMetadata) throws MipamsException {
 
-        int numOfRandomBytes = 32;
+        int numOfRandomBytes = 16;
 
         List<JumbfBox> resultAssertionJumbfBoxList = new ArrayList<>();
         JumbfBoxBuilder builder;
 
         for (JumbfBox jumbfBox : assertionJumbfBoxList) {
             try {
+
                 byte[] randomBytes = cryptoService.getRandomNumber(numOfRandomBytes);
+                JsonBox jsonBox = new JsonBox();
+                jsonBox.setContent(randomBytes);
+                jsonBox.updateBmffHeadersBasedOnBox();
 
                 builder = new JumbfBoxBuilder(jumbfBox);
-                builder.setPrivateField(randomBytes);
+                builder.setPrivateField(jsonBox);
 
                 resultAssertionJumbfBoxList.add(builder.getResult());
             } catch (CryptoException e) {

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 
+import org.mipams.jumbf.core.entities.BinaryDataBox;
 import org.mipams.jumbf.core.entities.BmffBox;
 import org.mipams.jumbf.core.entities.CborBox;
 import org.mipams.jumbf.core.entities.JsonBox;
@@ -173,5 +174,9 @@ public class ProvenanceUtils {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         return sdf.format(new Date());
+    }
+
+    public static BinaryDataBox getBinaryDataBoxWithEntropy() {
+        return null;
     }
 }

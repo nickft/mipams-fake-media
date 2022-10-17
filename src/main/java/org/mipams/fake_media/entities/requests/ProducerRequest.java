@@ -6,16 +6,79 @@ import org.mipams.jumbf.core.entities.JumbfBox;
 import org.mipams.fake_media.entities.ClaimGenerator;
 import org.mipams.fake_media.entities.ProvenanceSigner;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class ProducerRequest {
-    private @Getter @Setter String assetUrl;
-    private @Getter @Setter JumbfBox manifestStoreJumbfBox;
-    private @Getter @Setter List<JumbfBox> componentManifestJumbfBoxList;
-    private @Getter @Setter ProvenanceSigner signer;
-    private @Getter @Setter ClaimGenerator claimGenerator;
-    private @Getter @Setter List<JumbfBox> assertionList;
-    private @Getter @Setter List<String> redactedAssertionUriList;
-    private @Getter @Setter JumbfBox credentialsStoreJumbfBox;
+
+    private String assetUrl;
+    private JumbfBox manifestStoreJumbfBox;
+    private List<JumbfBox> componentManifestJumbfBoxList;
+    private ProvenanceSigner signer;
+    private ClaimGenerator claimGenerator;
+    private List<JumbfBox> assertionList;
+    private List<String> redactedAssertionUriList;
+    private JumbfBox credentialsStoreJumbfBox;
+
+    public String getAssetUrl() {
+        return assetUrl;
+    }
+
+    public void setAssetUrl(String assetUrl) {
+        this.assetUrl = assetUrl;
+    }
+
+    public JumbfBox getManifestStoreJumbfBox() {
+        return manifestStoreJumbfBox;
+    }
+
+    public void setManifestStoreJumbfBox(JumbfBox manifestStoreJumbfBox) {
+        this.manifestStoreJumbfBox = manifestStoreJumbfBox;
+    }
+
+    public List<JumbfBox> getComponentManifestJumbfBoxList() {
+        return componentManifestJumbfBoxList;
+    }
+
+    public void setComponentManifestJumbfBoxList(List<JumbfBox> componentManifestJumbfBoxList) {
+        this.componentManifestJumbfBoxList = componentManifestJumbfBoxList;
+    }
+
+    public ProvenanceSigner getSigner() {
+        return signer;
+    }
+
+    public void setSigner(ProvenanceSigner signer) {
+        this.signer = signer;
+    }
+
+    public ClaimGenerator getClaimGenerator() {
+        return claimGenerator;
+    }
+
+    public void setClaimGenerator(ClaimGenerator claimGenerator) {
+        this.claimGenerator = claimGenerator;
+    }
+
+    public List<JumbfBox> getAssertionList() {
+        return assertionList;
+    }
+
+    public void setAssertionList(List<JumbfBox> assertionList) {
+        this.assertionList = assertionList;
+    }
+
+    public List<String> getRedactedAssertionUriList() {
+        return redactedAssertionUriList;
+    }
+
+    public void setRedactedAssertionUriList(List<String> redactedAssertionUriList) {
+        this.redactedAssertionUriList = redactedAssertionUriList;
+    }
+
+    public JumbfBox getCredentialsStoreJumbfBox() {
+        return credentialsStoreJumbfBox;
+    }
+
+    public void setCredentialsStoreJumbfBox(JumbfBox credentialsStoreJumbfBox) {
+        this.credentialsStoreJumbfBox = credentialsStoreJumbfBox;
+    }
+
 }

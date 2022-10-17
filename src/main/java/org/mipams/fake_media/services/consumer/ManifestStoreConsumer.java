@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mipams.fake_media.entities.ProvenanceErrorMessages;
-import org.mipams.fake_media.entities.UriReference;
+import org.mipams.fake_media.entities.HashedUriReference;
 import org.mipams.fake_media.entities.assertions.IngredientAssertion;
 import org.mipams.fake_media.entities.responses.ManifestStoreResponse;
 import org.mipams.fake_media.services.AssertionFactory;
@@ -51,9 +51,9 @@ public class ManifestStoreConsumer {
 
         JumbfBox activeManifestJumbfBox = ProvenanceUtils.locateActiveManifest(manifestStoreJumbfBox);
 
-        List<UriReference> manifestIdToBeChecked = getIngredientManifestIdReferenceList(activeManifestJumbfBox);
+        List<HashedUriReference> manifestIdToBeChecked = getIngredientManifestIdReferenceList(activeManifestJumbfBox);
 
-        UriReference currentManifestReference;
+        HashedUriReference currentManifestReference;
         JumbfBox currentManifestJumbfBox;
 
         while (manifestIdToBeChecked.size() > 0) {
@@ -90,7 +90,7 @@ public class ManifestStoreConsumer {
         } else {
             manifestConsumer.verifyManifestIntegrity(activeManifestJumbfBox);
 
-            UriReference parentUriReference = locateParentIngredientReferenceFromManifest(activeManifestJumbfBox);
+            HashedUriReference parentUriReference = locateParentIngredientReferenceFromManifest(activeManifestJumbfBox);
 
             if (parentUriReference == null) {
                 throw new MipamsException(ProvenanceErrorMessages.UPDATE_MANIFEST_CONTENT_BINDING);
@@ -109,12 +109,13 @@ public class ManifestStoreConsumer {
         return manifestStoreResponse;
     }
 
-    private UriReference locateParentIngredientReferenceFromManifest(JumbfBox manifestJumbfBox) throws MipamsException {
+    private HashedUriReference locateParentIngredientReferenceFromManifest(JumbfBox manifestJumbfBox)
+            throws MipamsException {
 
         JumbfBox assertionStoreJumbfBox = ProvenanceUtils.getProvenanceJumbfBox(manifestJumbfBox,
                 new AssertionStoreContentType());
 
-        UriReference manifestReference = null;
+        HashedUriReference manifestReference = null;
 
         for (BmffBox contentBox : assertionStoreJumbfBox.getContentBoxList()) {
 
@@ -128,12 +129,12 @@ public class ManifestStoreConsumer {
         return manifestReference;
     }
 
-    public UriReference checkIfAssertionIsParentIngredientAndGetUriReference(JumbfBox assertionJumbfBox)
+    public HashedUriReference checkIfAssertionIsParentIngredientAndGetUriReference(JumbfBox assertionJumbfBox)
             throws MipamsException {
 
         MipamsAssertion type = MipamsAssertion.getTypeFromLabel(assertionJumbfBox.getDescriptionBox().getLabel());
 
-        UriReference manifestReference = null;
+        HashedUriReference manifestReference = null;
 
         IngredientAssertion ingredient;
 
@@ -148,14 +149,15 @@ public class ManifestStoreConsumer {
         return manifestReference;
     }
 
-    public List<UriReference> getIngredientManifestIdReferenceList(JumbfBox manifestJumbfBox) throws MipamsException {
+    public List<HashedUriReference> getIngredientManifestIdReferenceList(JumbfBox manifestJumbfBox)
+            throws MipamsException {
         JumbfBox assertionStoreJumbfBox = ProvenanceUtils.getProvenanceJumbfBox(manifestJumbfBox,
                 new AssertionStoreContentType());
 
-        List<UriReference> result = new ArrayList<>();
+        List<HashedUriReference> result = new ArrayList<>();
 
         IngredientAssertion ingredient;
-        UriReference manifestReference;
+        HashedUriReference manifestReference;
         for (BmffBox contentBox : assertionStoreJumbfBox.getContentBoxList()) {
             JumbfBox assertionJumbfBox = (JumbfBox) contentBox;
 

@@ -1,8 +1,13 @@
 package org.mipams.fake_media.entities;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class ClaimGenerator {
-    private @Getter @Setter String description;
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }
