@@ -1,5 +1,7 @@
 package org.mipams.provenance.services;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,25 +21,34 @@ public class UriReferenceService {
     @Autowired
     CoreGeneratorService coreGeneratorService;
 
-    public void verifyManifestUriReference(JumbfBox jumbfBox, HashedUriReference targetUriReference)
+    public void verifyManifestUriReference(List<JumbfBox> jumbfBoxes, HashedUriReference targetUriReference)
             throws MipamsException {
-
-        String label = jumbfBox.getDescriptionBox().getLabel();
-
-        if (label == null) {
-            throw new MipamsException(String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Jumbf Box"));
-        }
 
         if (!targetUriReference.getAlgorithm().equals(HashedUriReference.SUPPORTED_HASH_ALGORITHM)) {
             throw new MipamsException(ProvenanceErrorMessages.UNSUPPORTED_HASH_METHOD);
         }
 
-        byte[] computedDigest = getManifestSha256Digest(jumbfBox);
+        try{
+            try(ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                
+                for(JumbfBox jumbfBox: jumbfBoxes){
+                    String label = jumbfBox.getDescriptionBox().getLabel();
 
-        if (!Arrays.equals(targetUriReference.getDigest(), computedDigest)) {
-            throw new MipamsException(
-                    String.format(ProvenanceErrorMessages.URI_REFERENCE_DIGEST_MISMATCH,
-                            targetUriReference.getUri()));
+                    if (label == null) {
+                        throw new MipamsException(String.format(ProvenanceErrorMessages.EMPTY_LABEL, "Jumbf Box"));
+                    }
+
+                    baos.write(getManifestSha256Digest(jumbfBox));
+                }
+
+                if (!Arrays.equals(targetUriReference.getDigest(), baos.toByteArray())) {
+                    throw new MipamsException(
+                            String.format(ProvenanceErrorMessages.URI_REFERENCE_DIGEST_MISMATCH,
+                                    targetUriReference.getUri()));
+                }
+            }
+        } catch (IOException e) {
+            throw new MipamsException(e);
         }
 
     }

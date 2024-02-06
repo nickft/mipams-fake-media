@@ -4,8 +4,6 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-
 import org.mipams.jumbf.entities.BmffBox;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.entities.ParseMetadata;
@@ -19,8 +17,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AssertionStoreContentType implements ProvenanceContentType {
-
-    private static final Logger logger = Logger.getLogger(AssertionStoreContentType.class.getName());
 
     @Autowired
     JumbfBoxService jumbfBoxService;

@@ -33,7 +33,7 @@ public class ProvenanceErrorMessages {
     public static final String ASSERTION_STORE_NOT_FOUND = "Assertion Store Jumbf box is not found in Manifest Jumbf Box";
     public static final String CONTENT_BINDING_ASSERTION_NOT_FOUND = "Content Binding Assertion Jumbf box is not found in Manifest Jumbf Box";
     public static final String UNSUPPORTED_HASH_METHOD = "Unsupported Hash function. Only SHA-256 scheme is supported";
-    public static final String CONTENT_BINDING_MISMATCH = "Content Binding Mismatch. Asset digest does not match with the asserted digest.";
+    public static final String CONTENT_BINDING_MISMATCH = "Content Binding Mismatch in Manifest %s. Asset digest (%s) does not match with the asserted digest (%s).";
     public static final String UNREFERENCED_ASSERTION = "Found an Assertion JUMBF box that is not included in the Claim";
     public static final String ASSERTION_DIGEST_MISMATCH = "Assertion with label %s is corrupted. Expected digest in the Claim does not match with the digest of the assertion in the Assertion Store.";
     public static final String URI_REFERENCE_LABEL_MISMATCH = "Expected label in the Ingredient Reference %s does not match with the label of JUMBF Box";

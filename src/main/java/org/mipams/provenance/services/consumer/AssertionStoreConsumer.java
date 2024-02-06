@@ -62,11 +62,7 @@ public class AssertionStoreConsumer {
         logger.log(Level.FINE, String.format("Checking hash digest for asset: %s", assetUrl));
 
         if (!Arrays.equals(assertion.getDigest(), digest)) {
-
-            logger.info(CoreUtils.convertByteArrayToHex(digest));
-            logger.info(CoreUtils.convertByteArrayToHex(assertion.getDigest()));
-
-            throw new MipamsException(ProvenanceErrorMessages.CONTENT_BINDING_MISMATCH);
+            throw new MipamsException(String.format(ProvenanceErrorMessages.CONTENT_BINDING_MISMATCH, manifestJumbfBox.getDescriptionBox().getLabel(), CoreUtils.convertByteArrayToHex(digest), CoreUtils.convertByteArrayToHex(assertion.getDigest())));
         }
     }
 

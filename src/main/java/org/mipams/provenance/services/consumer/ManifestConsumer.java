@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.services.CoreGeneratorService;
 import org.mipams.jumbf.util.MipamsException;
+import org.mipams.privsec.services.content_types.ProtectionContentType;
 import org.mipams.provenance.entities.Claim;
 import org.mipams.provenance.services.ManifestDiscovery;
 import org.mipams.provenance.services.content_types.AssertionStoreContentType;
@@ -54,6 +55,10 @@ public class ManifestConsumer {
         }
 
         public void verifyManifestIntegrity(JumbfBox manifestJumbfBox) throws MipamsException {
+
+                if ((new ProtectionContentType()).getContentTypeUuid().equals(manifestJumbfBox.getDescriptionBox().getUuid())){
+                        return;
+                }
 
                 final String manifestId = manifestJumbfBox.getDescriptionBox().getLabel();
 

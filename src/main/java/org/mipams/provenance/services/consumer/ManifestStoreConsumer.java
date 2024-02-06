@@ -2,16 +2,20 @@ package org.mipams.provenance.services.consumer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.mipams.jumbf.entities.BmffBox;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.util.MipamsException;
+import org.mipams.privsec.entities.ProtectionDescriptionBox;
+import org.mipams.privsec.services.content_types.ProtectionContentType;
 import org.mipams.provenance.entities.HashedUriReference;
 import org.mipams.provenance.entities.ProvenanceErrorMessages;
 import org.mipams.provenance.entities.assertions.IngredientAssertion;
 import org.mipams.provenance.entities.responses.ManifestStoreResponse;
+import org.mipams.provenance.entities.responses.ProtectedManifestResponse;
 import org.mipams.provenance.services.AssertionFactory;
 import org.mipams.provenance.services.ManifestDiscovery;
 import org.mipams.provenance.services.UriReferenceService;
@@ -52,6 +56,10 @@ public class ManifestStoreConsumer {
 
         JumbfBox activeManifestJumbfBox = ProvenanceUtils.locateActiveManifest(manifestStoreJumbfBox);
 
+        if ((new ProtectionContentType()).getContentTypeUuid().equals(activeManifestJumbfBox.getDescriptionBox().getUuid())) {
+            return manifestStoreResponse;
+        }
+
         List<HashedUriReference> manifestIdToBeChecked = getIngredientManifestIdReferenceList(activeManifestJumbfBox);
 
         HashedUriReference currentManifestReference;
@@ -59,18 +67,52 @@ public class ManifestStoreConsumer {
 
         while (manifestIdToBeChecked.size() > 0) {
             currentManifestReference = manifestIdToBeChecked.remove(0);
-            logger.log(Level.FINE, "Consuming manifest with Id " + currentManifestReference.getUri());
+            logger.info("Consuming manifest with Id " + currentManifestReference.getUri());
 
             currentManifestJumbfBox = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
                     currentManifestReference.getUri());
 
-            uriReferenceService.verifyManifestUriReference(currentManifestJumbfBox, currentManifestReference);
+            if ((new ProtectionContentType()).getContentTypeUuid().equals(currentManifestJumbfBox.getDescriptionBox().getUuid())) {
+                ProtectionDescriptionBox pdBox = (ProtectionDescriptionBox) currentManifestJumbfBox.getContentBoxList().get(0);
 
-            manifestConsumer.verifyManifestIntegrity(currentManifestJumbfBox);
+                boolean hasAccessRules = pdBox.getArLabel() != null;
 
-            manifestStoreResponse.addManifestResponse(currentManifestJumbfBox);
+                Optional<BmffBox> accessRulesJumbfBox = Optional.empty();
 
-            manifestIdToBeChecked.addAll(getIngredientManifestIdReferenceList(currentManifestJumbfBox));
+                if (hasAccessRules) {
+                    try {
+                        accessRulesJumbfBox = manifestStoreJumbfBox.getContentBoxList().stream().filter(c -> pdBox.getArLabel().equals(((JumbfBox) c).getDescriptionBox().getLabel())).findFirst();
+
+                        if (accessRulesJumbfBox.isEmpty()) {
+                            throw new MipamsException(
+                                    "Could not find access rules JUMBF box with label: " + pdBox.getArLabel());
+                        }
+                    } catch (Exception e) {
+                        logger.info("Integrity of a URI reference to a protected content is not achieved.");
+                    }
+                }
+
+                ProtectedManifestResponse protectedResponse = new ProtectedManifestResponse(currentManifestJumbfBox.getDescriptionBox().getLabel(), accessRulesJumbfBox.isPresent() ? (JumbfBox) accessRulesJumbfBox.get() : null);
+                manifestStoreResponse.getManifestResponseMap().put(currentManifestJumbfBox.getDescriptionBox().getLabel(), protectedResponse);
+
+                try {
+                    uriReferenceService.verifyManifestUriReference(accessRulesJumbfBox.isPresent() ? List.of(currentManifestJumbfBox, ((JumbfBox) accessRulesJumbfBox.get())) : List.of(currentManifestJumbfBox), currentManifestReference);
+                    protectedResponse.setIntegrityStands(true);
+                } catch (MipamsException e) {
+                    logger.info(String.format("Integrity check does not stand for reference to Protected Manifest %s", currentManifestJumbfBox.getDescriptionBox().getLabel()));
+                    protectedResponse.setIntegrityStands(false);
+                }
+
+            } else {
+                uriReferenceService.verifyManifestUriReference(List.of(currentManifestJumbfBox), currentManifestReference);
+
+                manifestConsumer.verifyManifestIntegrity(currentManifestJumbfBox);
+    
+                manifestStoreResponse.addManifestResponse(currentManifestJumbfBox);
+    
+                manifestIdToBeChecked.addAll(getIngredientManifestIdReferenceList(currentManifestJumbfBox));
+            }
+            
         }
 
         return manifestStoreResponse;
@@ -84,28 +126,73 @@ public class ManifestStoreConsumer {
         ManifestStoreResponse manifestStoreResponse = new ManifestStoreResponse();
 
         JumbfBox activeManifestJumbfBox = ProvenanceUtils.locateActiveManifest(manifestStoreJumbfBox);
-        ManifestContentType contentType = manifestDiscovery.discoverManifestType(activeManifestJumbfBox);
 
-        if (manifestDiscovery.isStandardManifestRequest(contentType)) {
-            manifestConsumer.verifyManifestIntegrityAndContentBinding(activeManifestJumbfBox, assetUrl);
+        if((new ProtectionContentType()).getContentTypeUuid().equals(activeManifestJumbfBox.getDescriptionBox().getUuid())){
+            ProtectionDescriptionBox pdBox = (ProtectionDescriptionBox) activeManifestJumbfBox.getContentBoxList().get(0);
+            boolean hasAccessRules = pdBox.getArLabel() != null;
+
+            Optional<BmffBox> accessRulesJumbfBox = Optional.empty();
+
+            if (hasAccessRules) {
+                try {
+                    accessRulesJumbfBox = manifestStoreJumbfBox.getContentBoxList().stream().filter(c -> pdBox.getArLabel().equals(((JumbfBox) c).getDescriptionBox().getLabel())).findFirst();
+
+                    if (accessRulesJumbfBox.isEmpty()) {
+                        throw new MipamsException(
+                                "Could not find access rules JUMBF box with label: " + pdBox.getArLabel());
+                    }
+                } catch (Exception e) {
+                    logger.info("Integrity of a URI reference to a protected content is not achieved.");
+                }
+            }
+            ProtectedManifestResponse protectedResponse = new ProtectedManifestResponse(activeManifestJumbfBox.getDescriptionBox().getLabel(), accessRulesJumbfBox.isPresent() ? (JumbfBox) accessRulesJumbfBox.get() : null);
+            manifestStoreResponse.getManifestResponseMap().put(activeManifestJumbfBox.getDescriptionBox().getLabel(), protectedResponse);
         } else {
-            manifestConsumer.verifyManifestIntegrity(activeManifestJumbfBox);
+            ManifestContentType contentType = manifestDiscovery.discoverManifestType(activeManifestJumbfBox);
 
-            HashedUriReference parentUriReference = locateParentIngredientReferenceFromManifest(activeManifestJumbfBox);
+            if (manifestDiscovery.isStandardManifestRequest(contentType)) {
+                manifestConsumer.verifyManifestIntegrityAndContentBinding(activeManifestJumbfBox, assetUrl);
+            } else {
+                manifestConsumer.verifyManifestIntegrity(activeManifestJumbfBox);
 
-            if (parentUriReference == null) {
-                throw new MipamsException(ProvenanceErrorMessages.UPDATE_MANIFEST_CONTENT_BINDING);
+                HashedUriReference parentUriReference = locateParentIngredientReferenceFromManifest(activeManifestJumbfBox);
+
+                if (parentUriReference == null) {
+                    throw new MipamsException(ProvenanceErrorMessages.UPDATE_MANIFEST_CONTENT_BINDING);
+                }
+
+                JumbfBox parentStandardManifest = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
+                        parentUriReference.getUri());
+
+                ArrayList<JumbfBox> jumbfBoxList = new ArrayList<>();
+                jumbfBoxList.add(parentStandardManifest);
+
+                if((new ProtectionContentType()).getContentTypeUuid().equals(parentStandardManifest.getDescriptionBox().getUuid())){
+                    ProtectionDescriptionBox pdBox = (ProtectionDescriptionBox) parentStandardManifest.getContentBoxList().get(0);
+
+                    try{
+                        if(pdBox.getArLabel() != null) {
+                            Optional<BmffBox> accessRulesJumbfBox = manifestStoreJumbfBox.getContentBoxList().stream().filter(c -> pdBox.getArLabel().equals(((JumbfBox) c).getDescriptionBox().getLabel())).findFirst();
+
+                            if (accessRulesJumbfBox.isEmpty()) {
+                                throw new MipamsException(
+                                        "Could not find access rules JUMBF box with label: " + pdBox.getArLabel());
+                            }
+                            jumbfBoxList.add((JumbfBox) accessRulesJumbfBox.get());
+                        } 
+
+                    } catch (Exception e) {
+                        logger.info("Integrity of a URI reference to a protected content is not achieved.");
+                    }
+                }
+                
+                uriReferenceService.verifyManifestUriReference(jumbfBoxList, parentUriReference);
+
+                manifestConsumer.verifyManifestIntegrityAndContentBinding(parentStandardManifest, assetUrl);
             }
 
-            JumbfBox parentStandardManifest = ProvenanceUtils.locateManifestFromUri(manifestStoreJumbfBox,
-                    parentUriReference.getUri());
-
-            uriReferenceService.verifyManifestUriReference(parentStandardManifest, parentUriReference);
-
-            manifestConsumer.verifyManifestIntegrityAndContentBinding(parentStandardManifest, assetUrl);
+            manifestStoreResponse.addManifestResponse(activeManifestJumbfBox);
         }
-
-        manifestStoreResponse.addManifestResponse(activeManifestJumbfBox);
 
         return manifestStoreResponse;
     }
@@ -177,5 +264,4 @@ public class ManifestStoreConsumer {
 
         return result;
     }
-
 }

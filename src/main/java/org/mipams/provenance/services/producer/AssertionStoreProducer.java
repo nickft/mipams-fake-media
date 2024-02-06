@@ -85,7 +85,7 @@ public class AssertionStoreProducer {
             String uniqueLabel = String.format(ProvenanceUtils.ASSERTION_LABEL_MULTIPLE_INSTANCE_FORMAT, commonLabel,
                     occurences);
             assertion.getDescriptionBox().setLabel(uniqueLabel);
-            assertion.getDescriptionBox().updateBmffHeadersBasedOnBox();
+            assertion.getDescriptionBox().applyInternalBoxFieldsBasedOnExistingData();
 
             labelOccurenceMap.put(commonLabel, --occurences);
         }
@@ -141,7 +141,7 @@ public class AssertionStoreProducer {
                 byte[] randomBytes = cryptoService.getRandomNumber(numOfRandomBytes);
                 JsonBox jsonBox = new JsonBox();
                 jsonBox.setContent(randomBytes);
-                jsonBox.updateBmffHeadersBasedOnBox();
+                jsonBox.updateFieldsBasedOnExistingData();
 
                 builder = new JumbfBoxBuilder(jumbfBox);
                 builder.setPrivateField(jsonBox);

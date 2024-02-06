@@ -34,7 +34,7 @@ public class ManifestStoreResponse {
 
         List<JumbfBox> assertionJumbfBoxList = getAssertionStoreContent(manifestJumbfBox);
 
-        ManifestResponse manifestResponse = new ManifestResponse();
+        DefaultManifestResponse manifestResponse = new DefaultManifestResponse();
         manifestResponse.setAssertionJumbfBoxList(assertionJumbfBoxList);
         manifestResponse.setClaim(getCertificateContent(claim));
         manifestResponse.setClaimSignature(getCertificateSignatureContent(claimSignatue));
